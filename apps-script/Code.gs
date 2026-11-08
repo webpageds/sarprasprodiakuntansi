@@ -45,6 +45,8 @@ function doPost(e) {
     else if (action === 'login') result = login_(body);
     else if (action === 'setupAdmin') result = setupAdmin_(body);
     else if (action === 'changePassword') result = changePassword_(body);
+    else if (action === 'adminListUsers') result = adminListUsers_(authenticate_(body.token));
+    else if (action === 'adminResetPassword') result = adminResetPassword_(authenticate_(body.token),body);
     else {
       const user = authenticate_(body.token);
       if (action === 'logout') {
@@ -230,6 +232,41 @@ function changePassword_(body) {
   if (mustCol >= 0) sh.getRange(idx+1,mustCol+1).setValue(false);
   if (updatedCol >= 0) sh.getRange(idx+1,updatedCol+1).setValue(new Date().toISOString());
   return {ok:true,message:'Password berhasil diperbarui.'};
+}
+
+function adminListUsers_(admin) {
+  if (String(admin.role) !== 'admin') throw new Error('Hanya Admin Prodi yang dapat mengelola akun.');
+  const users = records_('Users').map(u => ({
+    userId:String(u.userId||''),name:String(u.name||''),email:String(u.email||''),
+    username:String(u.username||''),nuptk:String(u.nuptk||''),role:String(u.role||''),
+    active:String(u.active)!=='false',mustChangePassword:String(u.mustChangePassword)==='true'
+  }));
+  return {ok:true,users};
+}
+
+function adminResetPassword_(admin,body) {
+  if (String(admin.role) !== 'admin') throw new Error('Hanya Admin Prodi yang dapat mereset password.');
+  const userId = String(body.userId||'').trim();
+  const password = String(body.newPassword||'');
+  if (!userId) throw new Error('Pengguna belum dipilih.');
+  if (password.length < 12) throw new Error('Password minimal 12 karakter.');
+  const sh = sheet_('Users'), values = sh.getDataRange().getValues();
+  if (values.length < 2) throw new Error('Belum ada akun pengguna.');
+  const headers = values[0].map(String);
+  const idCol=headers.indexOf('userId'), hashCol=headers.indexOf('passwordHash'), saltCol=headers.indexOf('salt');
+  const activeCol=headers.indexOf('active'), mustCol=headers.indexOf('mustChangePassword'), updatedCol=headers.indexOf('updatedAt');
+  if ([idCol,hashCol,saltCol].some(i=>i<0)) throw new Error('Kolom akun belum lengkap. Jalankan migrateUsersSchema.');
+  const idx=values.findIndex((r,i)=>i>0 && String(r[idCol])===userId);
+  if(idx<1) throw new Error('Akun pengguna tidak ditemukan.');
+  if(activeCol>=0 && String(values[idx][activeCol])==='false') throw new Error('Akun tidak aktif. Aktifkan akun terlebih dahulu.');
+  const salt=Utilities.getUuid().replace(/-/g,'');
+  sh.getRange(idx+1,hashCol+1).setValue(hashPassword_(password,salt));
+  sh.getRange(idx+1,saltCol+1).setValue(salt);
+  if(mustCol>=0) sh.getRange(idx+1,mustCol+1).setValue(true);
+  if(updatedCol>=0) sh.getRange(idx+1,updatedCol+1).setValue(new Date().toISOString());
+  const target={userId,name:String(values[idx][headers.indexOf('name')]||''),role:String(values[idx][headers.indexOf('role')]||'')};
+  log_(admin,'Reset password','Users',userId,'Admin mengatur ulang password akun '+target.name+' ('+target.role+').');
+  return {ok:true,message:'Password berhasil diatur ulang. Pengguna wajib menggantinya saat login berikutnya.'};
 }
 
 function authenticate_(token) {
