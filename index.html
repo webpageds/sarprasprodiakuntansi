@@ -255,11 +255,40 @@ const allowed=(...r)=>r.includes(role),late=l=>l.status==='Dipinjam'&&l.kembali<
 function seed(){let rooms=[['Ruang Prodi','Kantor'],['Ruang Dosen','Kantor'],['Laboratorium Komputer','Laboratorium'],['Ruang Kelas A','Kelas'],['Toilet Lantai 2','Toilet']].map((x,i)=>({id:'r'+(i+1),nama:x[0],jenis:x[1],pj:'Admin Prodi'}));
 const make=(i,kode,nama,kat,ruang,kondisi,thn,nilai,umur,pj)=>({id:'a'+i,kode,nama,kat,ruang,kondisi,status:'Aktif',thn,nilai,umur,sumber:'Pembelian',sn:'',pj});
 return{rooms,assets:[make(1,'PRD-TI-2023-001','Laptop Dosen Lenovo','TI','r2','Baik',2023,9500000,4,'Dr. Sari'),make(2,'PRD-TI-2022-002','PC Lab Dell (1)','TI','r3','Rusak Ringan',2022,8000000,5,'Ir. Budi'),make(3,'PRD-TI-2022-003','PC Lab Dell (2)','TI','r3','Baik',2022,8000000,5,'Ir. Budi'),make(4,'PRD-TI-2021-004','Proyektor Epson','TI','r4','Rusak Berat',2021,6500000,5,'Admin Prodi'),make(5,'PRD-PER-2020-005','Meja Dosen','Perabot','r2','Baik',2020,1800000,8,'Dr. Sari'),make(6,'PRD-PEN-2021-006','AC Panasonic 1 PK','Penunjang','r1','Rusak Sedang',2021,4200000,8,'Admin Prodi'),make(7,'PRD-KAN-2023-007','Printer Canon','Kantor','r1','Baik',2023,2300000,5,'Admin Prodi')],stock:[{id:'s1',nama:'Kertas HVS A4',kat:'ATK',satuan:'rim',stok:12,min:5,lok:'Lemari ATK'},{id:'s2',nama:'Toner Printer',kat:'Habis Pakai TI',satuan:'pcs',stok:2,min:2,lok:'Lemari ATK'},{id:'s3',nama:'Sabun Cair',kat:'Kebersihan',satuan:'botol',stok:6,min:3,lok:'Gudang'}],tx:[],loans:[{id:'l1',asset:'a1',peminjam:'Dr. Sari',tgl:today(),kembali:today(),perlu:'Seminar',status:'Diajukan'}],repairs:[{id:'p1',asset:'a2',rusak:'Monitor berkedip',tgl:today(),pelapor:'Ir. Budi',tindakan:'',status:'Dilaporkan'}],mutasi:[],hapus:[],clean:[],log:[]}}
-function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S||!Array.isArray(S.assets))S=seed();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));document.getElementById('storageState').textContent='Data tersimpan di perangkat ini'}catch(e){document.getElementById('storageState').textContent='Penyimpanan browser penuh / tidak tersedia'}}
+function emptyState(){return {rooms:[],assets:[],stock:[],tx:[],loans:[],repairs:[],mutasi:[],hapus:[],clean:[],log:[]};}
+async function apiCall(payload,token){
+ const body=Object.assign({},payload,token?{token}:{});
+ const response=await fetch(window.SIMSPA_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+ const result=await response.json();
+ if(!result.ok) throw new Error(result.error||'Permintaan ke backend gagal.');
+ return result;
+}
+async function loadRemoteState(token){
+ const modules=['rooms','assets','stock','tx','loans','repairs','mutasi','hapus','clean','log'];
+ const next=emptyState();
+ for(const module of modules){
+  const result=await apiCall({action:'list',module},token);
+  next[module]=Array.isArray(result.records)?result.records:[];
+ }
+ S=next;
+ document.getElementById('storageState').textContent='Terhubung ke database Google Sheets';
+}
+async function syncRemoteState(){
+ if(!currentUser) return;
+ const roleNow=currentUser.role;
+ let modules=roleNow==='admin'||roleNow==='pimpinan'
+  ? ['rooms','assets','stock','tx','loans','repairs','mutasi','hapus','clean','log']
+  : roleNow==='dosen' ? ['loans','repairs','clean'] : ['repairs','clean'];
+ for(const module of modules){
+  await apiCall({action:'sync',module,records:S[module]||[]},sessionStorage.getItem('simspaSession')?JSON.parse(sessionStorage.getItem('simspaSession')).token:null);
+ }
+ document.getElementById('storageState').textContent='Tersinkron ke Google Sheets';
+}
+function save(){document.getElementById('storageState').textContent='Menyimpan ke database bersama...';}
+
 function log(message,ref=''){S.log.unshift({t:new Date().toLocaleString('id-ID'),r:ROLES[role],m:message,a:ref});}
 function toast(msg){let n=document.createElement('div');n.className='toast';n.textContent=msg;document.body.append(n);setTimeout(()=>n.remove(),2400)}
-function persist(){save();render();}
+function persist(){save();render();syncRemoteState().catch(err=>{document.getElementById('storageState').textContent='Gagal sinkronisasi';toast('Gagal menyimpan ke database: '+err.message);});}
 function statusBadge(s){let c=/Baik|Selesai|Dikembalikan|Disetujui|Aktif|Sudah dibersihkan|Bersih|Aman/.test(s)?'good':/Rusak Berat|Tidak Dapat|Terlambat|Ditolak|Menipis|Dihapus|Terbuka/.test(s)?'bad':/Rusak|Diajukan|Diproses|Belum/.test(s)?'warn':'info';return `<span class="badge ${c}">${esc(s)}</span>`}
 function table(headers,rows){return `<div class="tablewrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(v=>`<td>${v??''}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty">Belum ada data untuk ditampilkan.</td></tr>`}</tbody></table></div>`}
 function action(label,key,kind=''){return `<button class="btn sm ${kind}" data-action="${esc(key)}">${label}</button>`}
@@ -419,6 +448,8 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
    if(!result.token||!result.user||!ROLES[result.user.role]) throw new Error('Respons akun tidak valid atau role belum dikenali.');
    currentUser=result.user;role=result.user.role;
    sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
+   btn.textContent='Memuat data...';
+   await loadRemoteState(result.token);
    view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;
    document.getElementById('activeRoleLabel').textContent=(result.user.name||ROLES[role])+' · '+ROLES[role];
    render();
