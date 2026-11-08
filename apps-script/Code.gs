@@ -32,25 +32,42 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  let body = {};
+  const formRequest = !!(e && e.parameter && e.parameter.payload);
   try {
-    const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    body = formRequest
+      ? JSON.parse(e.parameter.payload)
+      : JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const action = String(body.action || '');
-    if (action === 'bootstrap') return json_(bootstrap_());
-    if (action === 'login') return json_(login_(body));
-    if (action === 'setupAdmin') return json_(setupAdmin_(body));
-    const user = authenticate_(body.token);
-    if (action === 'logout') {
-      CacheService.getScriptCache().remove('session:' + body.token);
-      return json_({ok:true});
+    let result;
+    if (action === 'bootstrap') result = bootstrap_();
+    else if (action === 'login') result = login_(body);
+    else if (action === 'setupAdmin') result = setupAdmin_(body);
+    else {
+      const user = authenticate_(body.token);
+      if (action === 'logout') {
+        CacheService.getScriptCache().remove('session:' + body.token);
+        result = {ok:true};
+      } else if (action === 'list') result = listRecords_(user, body.module);
+      else if (action === 'sync') result = syncRecords_(user, body.module, body.records);
+      else if (action === 'save') result = saveRecord_(user, body.module, body.record);
+      else if (action === 'remove') result = removeRecord_(user, body.module, body.id);
+      else result = {ok:false,error:'Action tidak dikenal.'};
     }
-    if (action === 'list') return json_(listRecords_(user, body.module));
-    if (action === 'sync') return json_(syncRecords_(user, body.module, body.records));
-    if (action === 'save') return json_(saveRecord_(user, body.module, body.record));
-    if (action === 'remove') return json_(removeRecord_(user, body.module, body.id));
-    return json_({ok:false,error:'Action tidak dikenal.'});
+    return formRequest ? htmlPostMessage_(result, body._nonce) : json_(result);
   } catch (err) {
-    return json_({ok:false,error:err.message || String(err)});
+    const result = {ok:false,error:err.message || String(err)};
+    return formRequest ? htmlPostMessage_(result, body._nonce) : json_(result);
   }
+}
+
+function htmlPostMessage_(result, nonce) {
+  const payload = JSON.stringify({type:'SIMSPA_API_RESPONSE',nonce:String(nonce || ''),payload:result})
+    .replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+  const html = '<!doctype html><html><head><meta charset="utf-8"></head><body><script>' +
+    'window.top.postMessage(' + payload + ', "*");' +
+    '</script></body></html>';
+  return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function bootstrap_() {
