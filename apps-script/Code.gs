@@ -8,7 +8,7 @@ const CONFIG = {
   APP_NAME: 'SIM-SPA Prodi Akuntansi',
   TOKEN_TTL_SECONDS: 21600,
   SHEETS: {
-    Users: ['userId','name','email','passwordHash','salt','role','active','createdAt','updatedAt'],
+    Users: ['userId','name','email','username','nuptk','passwordHash','salt','role','active','createdAt','updatedAt'],
     Assets: ['id','assetCode','name','category','brand','roomId','condition','quantity','unit','purchaseDate','purchaseValue','source','notes','createdAt','updatedAt'],
     Rooms: ['id','name','building','floor','capacity','notes','createdAt','updatedAt'],
     StockItems: ['id','name','category','unit','minimumStock','currentStock','notes','createdAt','updatedAt'],
@@ -91,20 +91,59 @@ function setupAdmin_(body) {
     if (!name || !email || password.length < 12) throw new Error('Nama, email, dan password minimal 12 karakter wajib diisi.');
     const salt = Utilities.getUuid().replace(/-/g,'');
     const hash = hashPassword_(password,salt);
-    sh.appendRow([Utilities.getUuid(),name,email,hash,salt,'admin',true,new Date().toISOString(),new Date().toISOString()]);
+    sh.appendRow([Utilities.getUuid(),name,email,email,'',hash,salt,'admin',true,new Date().toISOString(),new Date().toISOString()]);
     return {ok:true,message:'Admin awal berhasil dibuat. Hapus/ubah password setup setelah ini.'};
   } finally { lock.releaseLock(); }
 }
 
+function migrateUsersSchema() {
+  const sh = sheet_('Users');
+  const expected = CONFIG.SHEETS.Users;
+  const current = sh.getLastRow() ? sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(String) : [];
+  if (!current.length) { sh.appendRow(expected); return {ok:true,added:expected}; }
+  expected.forEach((header) => {
+    if (!current.includes(header)) sh.getRange(1,sh.getLastColumn()+1).setValue(header);
+  });
+  return {ok:true,headers:sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0]};
+}
+
+function createLecturerUsersFromRoster(rosterJson) {
+  // Roster import is initiated manually in Apps Script editor, never from the public website.
+  const roster = JSON.parse(rosterJson || '[]');
+  if (!Array.isArray(roster) || roster.length > 100) throw new Error('Roster tidak valid.');
+  migrateUsersSchema();
+  const sh = sheet_('Users');
+  const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(String);
+  const rows = records_('Users');
+  const created = [];
+  roster.forEach(person => {
+    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const name = String(person.name || '').trim();
+    if (!name || !/^\\d{12,20}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid untuk: '+name);
+    if (rows.some(r => String(r.nuptk || '') === nuptk)) return;
+    const salt = Utilities.getUuid().replace(/-/g,'');
+    const tempPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
+    const account = {
+      userId:Utilities.getUuid(),name,email:'',username:nuptk,nuptk,
+      passwordHash:hashPassword_(tempPassword,salt),salt,role:'dosen',active:true,
+      createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
+    };
+    const values = headers.map(key => account[key] === undefined ? '' : account[key]);
+    sh.appendRow(values);
+    created.push({name,nuptk,temporaryPassword:tempPassword});
+  });
+  return created;
+}
+
 function login_(body) {
-  const email = String(body.email || '').trim().toLowerCase();
+  const identifier = String(body.identifier || body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
   const rows = records_('Users');
-  const row = rows.find(r => String(r.email).toLowerCase() === email && String(r.active) !== 'false');
+  const row = rows.find(r => (String(r.email || '').toLowerCase() === identifier || String(r.username || '').toLowerCase() === identifier || String(r.nuptk || '').toLowerCase() === identifier) && String(r.active) !== 'false');
   if (!row || !constantTimeEquals_(hashPassword_(password,row.salt),row.passwordHash)) throw new Error('Email atau password tidak valid.');
   const token = Utilities.getUuid() + Utilities.getUuid();
   CacheService.getScriptCache().put('session:' + token, JSON.stringify({userId:row.userId,email:row.email,name:row.name,role:row.role}), CONFIG.TOKEN_TTL_SECONDS);
-  return {ok:true,token,user:{id:row.userId,name:row.name,email:row.email,role:row.role}};
+  return {ok:true,token,user:{id:row.userId,name:row.name,email:row.email||'',username:row.username||'',nuptk:row.nuptk||'',role:row.role}};
 }
 
 function authenticate_(token) {
