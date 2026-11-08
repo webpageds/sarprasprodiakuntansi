@@ -8,7 +8,8 @@ const CONFIG = {
   APP_NAME: 'SIM-SPA Prodi Akuntansi',
   TOKEN_TTL_SECONDS: 21600,
   SHEETS: {
-    Users: ['userId','name','email','username','nuptk','passwordHash','salt','role','active','createdAt','updatedAt'],
+    Users: ['userId','name','email','username','nuptk','passwordHash','salt','role','active','mustChangePassword','createdAt','updatedAt'],
+    LecturerRoster: ['name','nuptk','role'],
     Assets: ['id','assetCode','name','category','brand','roomId','condition','quantity','unit','purchaseDate','purchaseValue','source','notes','createdAt','updatedAt'],
     Rooms: ['id','name','building','floor','capacity','notes','createdAt','updatedAt'],
     StockItems: ['id','name','category','unit','minimumStock','currentStock','notes','createdAt','updatedAt'],
@@ -43,6 +44,7 @@ function doPost(e) {
     if (action === 'bootstrap') result = bootstrap_();
     else if (action === 'login') result = login_(body);
     else if (action === 'setupAdmin') result = setupAdmin_(body);
+    else if (action === 'changePassword') result = changePassword_(body);
     else {
       const user = authenticate_(body.token);
       if (action === 'logout') {
@@ -91,7 +93,7 @@ function setupAdmin_(body) {
     if (!name || !email || password.length < 12) throw new Error('Nama, email, dan password minimal 12 karakter wajib diisi.');
     const salt = Utilities.getUuid().replace(/-/g,'');
     const hash = hashPassword_(password,salt);
-    sh.appendRow([Utilities.getUuid(),name,email,email,'',hash,salt,'admin',true,new Date().toISOString(),new Date().toISOString()]);
+    appendObject_('Users',{userId:Utilities.getUuid(),name,email,username:email,nuptk:'',passwordHash:hash,salt,role:'admin',active:true,mustChangePassword:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
     return {ok:true,message:'Admin awal berhasil dibuat. Hapus/ubah password setup setelah ini.'};
   } finally { lock.releaseLock(); }
 }
@@ -100,39 +102,44 @@ function migrateUsersSchema() {
   const sh = sheet_('Users');
   const expected = CONFIG.SHEETS.Users;
   const current = sh.getLastRow() ? sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(String) : [];
-  if (!current.length) { sh.appendRow(expected); return {ok:true,added:expected}; }
-  expected.forEach((header) => {
+  if (!current.length) { sh.appendRow(expected); return {ok:true,headers:expected}; }
+  expected.forEach(header => {
     if (!current.includes(header)) sh.getRange(1,sh.getLastColumn()+1).setValue(header);
   });
   return {ok:true,headers:sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0]};
 }
 
-function createLecturerUsersFromRoster(rosterJson) {
-  // Roster import is initiated manually in Apps Script editor, never from the public website.
-  const roster = JSON.parse(rosterJson || '[]');
-  if (!Array.isArray(roster) || roster.length > 100) throw new Error('Roster tidak valid.');
-  migrateUsersSchema();
-  const sh = sheet_('Users');
+function appendObject_(sheetName, object) {
+  const sh = sheet_(sheetName);
   const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(String);
-  const rows = records_('Users');
-  const created = [];
+  sh.appendRow(headers.map(key => object[key] === undefined ? '' : object[key]));
+}
+
+function importLecturersFromRosterSheet() {
+  migrateUsersSchema();
+  const roster = records_('LecturerRoster');
+  if (!roster.length) throw new Error('Tab LecturerRoster masih kosong. Isi kolom name, nuptk, role terlebih dahulu.');
+  const existing = records_('Users');
+  const issued = [];
   roster.forEach(person => {
-    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
     const name = String(person.name || '').trim();
-    if (!name || !/^\\d{12,20}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid untuk: '+name);
-    if (rows.some(r => String(r.nuptk || '') === nuptk)) return;
+    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const requestedRole = String(person.role || 'dosen').trim().toLowerCase();
+    const role = requestedRole === 'pimpinan' ? 'pimpinan' : 'dosen';
+    if (!name || !/^\\d{16}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid: '+name);
+    if (existing.some(row => String(row.nuptk || '') === nuptk)) return;
     const salt = Utilities.getUuid().replace(/-/g,'');
-    const tempPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
-    const account = {
+    const temporaryPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
+    appendObject_('Users',{
       userId:Utilities.getUuid(),name,email:'',username:nuptk,nuptk,
-      passwordHash:hashPassword_(tempPassword,salt),salt,role:'dosen',active:true,
-      createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
-    };
-    const values = headers.map(key => account[key] === undefined ? '' : account[key]);
-    sh.appendRow(values);
-    created.push({name,nuptk,temporaryPassword:tempPassword});
+      passwordHash:hashPassword_(temporaryPassword,salt),salt,role,active:true,
+      mustChangePassword:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
+    });
+    issued.push({name,nuptk,role,temporaryPassword});
   });
-  return created;
+  // One-time output only: plaintext temporary passwords are not saved in any sheet.
+  console.log('SIM-SPA INITIAL CREDENTIALS (deliver privately, then delete this execution log): '+JSON.stringify(issued));
+  return {ok:true,created:issued.length,skipped:roster.length-issued.length,notice:'Password sementara hanya dicetak satu kali pada Execution log.'};
 }
 
 function login_(body) {
@@ -143,7 +150,24 @@ function login_(body) {
   if (!row || !constantTimeEquals_(hashPassword_(password,row.salt),row.passwordHash)) throw new Error('Email atau password tidak valid.');
   const token = Utilities.getUuid() + Utilities.getUuid();
   CacheService.getScriptCache().put('session:' + token, JSON.stringify({userId:row.userId,email:row.email,name:row.name,role:row.role}), CONFIG.TOKEN_TTL_SECONDS);
-  return {ok:true,token,user:{id:row.userId,name:row.name,email:row.email||'',username:row.username||'',nuptk:row.nuptk||'',role:row.role}};
+  return {ok:true,token,user:{id:row.userId,name:row.name,email:row.email||'',username:row.username||'',nuptk:row.nuptk||'',role:row.role,mustChangePassword:String(row.mustChangePassword)==='true'}};
+}
+
+function changePassword_(body) {
+  const user = authenticate_(body.token);
+  const password = String(body.newPassword || '');
+  if (password.length < 12) throw new Error('Password baru minimal 12 karakter.');
+  const sh = sheet_('Users'), values = sh.getDataRange().getValues(), headers = values[0].map(String);
+  const idCol = headers.indexOf('userId'), hashCol = headers.indexOf('passwordHash'), saltCol = headers.indexOf('salt');
+  const mustCol = headers.indexOf('mustChangePassword'), updatedCol = headers.indexOf('updatedAt');
+  const idx = values.findIndex((r,i)=>i>0 && String(r[idCol])===String(user.userId));
+  if (idx < 1) throw new Error('Akun tidak ditemukan.');
+  const salt = Utilities.getUuid().replace(/-/g,'');
+  sh.getRange(idx+1,hashCol+1).setValue(hashPassword_(password,salt));
+  sh.getRange(idx+1,saltCol+1).setValue(salt);
+  if (mustCol >= 0) sh.getRange(idx+1,mustCol+1).setValue(false);
+  if (updatedCol >= 0) sh.getRange(idx+1,updatedCol+1).setValue(new Date().toISOString());
+  return {ok:true,message:'Password berhasil diperbarui.'};
 }
 
 function authenticate_(token) {
