@@ -283,9 +283,32 @@ function listRecords_(user,module) {
   const name = moduleToSheet_(module);
   assertRead_(user,name);
   const sh = sheet_('AppData'), values = sh.getDataRange().getValues();
-  if (values.length < 2) return {ok:true,records:[]};
-  const rows = values.slice(1).filter(r => String(r[0]) === String(module));
-  return {ok:true,records:rows.map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean)};
+  let rows = values.length < 2 ? [] : values.slice(1).filter(r => String(r[0]) === String(module))
+    .map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean);
+  if (module === 'assets' && !rows.length) rows = records_('Assets').map(adaptAssetRecord_).filter(a => a.nama);
+  if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
+    rows = rows.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
+  }
+  return {ok:true,records:rows};
+}
+
+function adaptAssetRecord_(asset) {
+  const a = asset || {};
+  return {
+    id:String(a.id || Utilities.getUuid()),
+    kode:String(a.kode || a.assetCode || ''),
+    nama:String(a.nama || a.name || ''),
+    kat:String(a.kat || a.category || 'Lainnya'),
+    ruang:String(a.ruang || a.roomId || ''),
+    kondisi:String(a.kondisi || a.condition || 'Baik'),
+    status:String(a.status || 'Aktif'),
+    thn:String(a.thn || a.purchaseDate || '').slice(0,4),
+    nilai:Number(a.nilai !== undefined ? a.nilai : a.purchaseValue || 0),
+    umur:Number(a.umur || 5),
+    sumber:String(a.sumber || a.source || ''),
+    sn:String(a.sn || a.brand || ''),
+    pj:String(a.pj || a.responsiblePerson || '')
+  };
 }
 
 function listManyRecords_(user, modules) {
@@ -296,10 +319,17 @@ function listManyRecords_(user, modules) {
   modules.forEach(module => {
     const sheetName = moduleToSheet_(module);
     assertRead_(user,sheetName);
-    out[module] = values.length < 2 ? [] : values.slice(1)
+    let records = values.length < 2 ? [] : values.slice(1)
       .filter(row => String(row[0]) === String(module))
       .map(row => { try { return JSON.parse(row[2]); } catch(e) { return null; } })
       .filter(Boolean);
+    if (module === 'assets' && !records.length) {
+      records = records_('Assets').map(adaptAssetRecord_).filter(a => a.nama);
+    }
+    if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
+      records = records.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
+    }
+    out[module] = records;
   });
   return {ok:true,records:out};
 }
@@ -309,6 +339,12 @@ function syncRecords_(user,module,records) {
   assertWrite_(user,name,'sync');
   if (!Array.isArray(records)) throw new Error('Daftar data tidak valid.');
   if (records.length > 2000) throw new Error('Maksimal 2.000 data per modul dalam satu sinkronisasi.');
+  if (name === 'Loans' && String(user.role) === 'dosen') {
+    records.forEach(record => {
+      const owner = String(record.borrowerUserId || record.createdByUserId || '');
+      if (owner !== String(user.userId)) throw new Error('Dosen hanya dapat menyimpan pengajuan peminjaman miliknya sendiri.');
+    });
+  }
   const sh = sheet_('AppData'), lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -341,6 +377,10 @@ function syncRecords_(user,module,records) {
 function saveRecord_(user,module,record) {
   const name = moduleToSheet_(module); assertWrite_(user,name,'save');
   if (!record || typeof record !== 'object') throw new Error('Data tidak valid.');
+  if (name === 'Loans' && String(user.role) === 'dosen' &&
+      String(record.borrowerUserId || record.createdByUserId || '') !== String(user.userId)) {
+    throw new Error('Dosen hanya dapat menyimpan pengajuan peminjaman miliknya sendiri.');
+  }
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const sh = sheet_(name), headers = CONFIG.SHEETS[name], values = sh.getDataRange().getValues();
