@@ -467,7 +467,7 @@ let selectedLoginRole = '';
 function openCredentialPanel(roleName){
  selectedLoginRole=roleName;
  const labels={admin:'Admin Prodi',pimpinan:'Pimpinan Prodi',dosen:'Dosen',petugas:'Petugas Kebersihan'};
- const isLecturer=roleName==='dosen';
+ const isLecturer=['dosen','pimpinan'].includes(roleName);
  document.getElementById('roleChooser').hidden=true;
  document.getElementById('credentialPanel').hidden=false;
  document.getElementById('credentialTitle').textContent='Login '+labels[roleName];
