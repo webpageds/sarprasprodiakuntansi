@@ -229,7 +229,7 @@ function assertRead_(user,sheetName) {
   const role = String(user.role);
   const all = ['admin','pimpinan'];
   const map = {
-    Assets:['admin','pimpinan','dosen'], Rooms:['admin','pimpinan','dosen'],
+    Assets:['admin','pimpinan','dosen'], Rooms:['admin','pimpinan','dosen','petugas'],
     Loans:['admin','pimpinan','dosen'], Repairs:['admin','pimpinan','dosen','petugas'],
     CleaningRecords:['admin','pimpinan','dosen','petugas'],
     StockItems:['admin','pimpinan'], StockTransactions:['admin','pimpinan'],
