@@ -51,6 +51,7 @@ function doPost(e) {
         CacheService.getScriptCache().remove('session:' + body.token);
         result = {ok:true};
       } else if (action === 'list') result = listRecords_(user, body.module);
+      else if (action === 'listMany') result = listManyRecords_(user, body.modules);
       else if (action === 'sync') result = syncRecords_(user, body.module, body.records);
       else if (action === 'save') result = saveRecord_(user, body.module, body.record);
       else if (action === 'remove') result = removeRecord_(user, body.module, body.id);
@@ -201,6 +202,22 @@ function listRecords_(user,module) {
   if (values.length < 2) return {ok:true,records:[]};
   const rows = values.slice(1).filter(r => String(r[0]) === String(module));
   return {ok:true,records:rows.map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean)};
+}
+
+function listManyRecords_(user, modules) {
+  if (!Array.isArray(modules) || modules.length > 12) throw new Error('Daftar modul tidak valid.');
+  const sh = sheet_('AppData');
+  const values = sh.getDataRange().getValues();
+  const out = {};
+  modules.forEach(module => {
+    const sheetName = moduleToSheet_(module);
+    assertRead_(user,sheetName);
+    out[module] = values.length < 2 ? [] : values.slice(1)
+      .filter(row => String(row[0]) === String(module))
+      .map(row => { try { return JSON.parse(row[2]); } catch(e) { return null; } })
+      .filter(Boolean);
+  });
+  return {ok:true,records:out};
 }
 
 function syncRecords_(user,module,records) {
