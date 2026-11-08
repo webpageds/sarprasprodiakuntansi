@@ -7,6 +7,36 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* Login gateway */
+#loginScreen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 80% 15%,#1d5b72 0,transparent 32%),linear-gradient(135deg,#0c233b,#123e55 65%,#0f6058);display:flex;align-items:center;justify-content:center;padding:28px;overflow:auto}
+#loginScreen[hidden]{display:none}
+.login-shell{width:min(1080px,100%);display:grid;grid-template-columns:1fr 1.1fr;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 30px 90px #061a2b66}
+.login-intro{background:linear-gradient(155deg,#12324e,#0e675f);color:#fff;padding:46px 42px;display:flex;flex-direction:column;justify-content:space-between;min-height:590px;position:relative;overflow:hidden}
+.login-intro:after{content:'SPA';position:absolute;font:800 180px Manrope;right:-12px;bottom:40px;color:#ffffff0b;pointer-events:none}
+.login-brand{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.login-mark{height:48px;width:48px;border-radius:15px;background:#dff7f2;color:#0e655e;display:grid;place-items:center;font:800 17px Manrope}
+.login-intro h1{font:800 clamp(28px,4vw,40px)/1.13 Manrope;margin:48px 0 13px;position:relative;z-index:1}
+.login-intro p{color:#c4d9e2;max-width:360px;line-height:1.8;position:relative;z-index:1}
+.login-points{display:grid;gap:13px;margin-top:36px;position:relative;z-index:1}
+.login-point{display:flex;align-items:center;gap:11px;color:#e2f4f1;font-size:12px}
+.login-point span{height:29px;width:29px;border-radius:9px;background:#ffffff18;display:grid;place-items:center}
+.login-copy{color:#a8c4d2;font-size:10px;margin-top:35px;position:relative;z-index:1}
+.login-select{padding:44px 42px}
+.login-select h2{font:800 24px Manrope;margin:0 0 7px;color:#18344d}
+.login-select>p{font-size:12px;color:#738398;margin:0 0 26px}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.role-card{border:1px solid #e4ebf0;border-radius:15px;padding:17px 15px;background:#fff;text-align:left;transition:.18s;min-height:125px;color:#20394f}
+.role-card:hover,.role-card.selected{border-color:#0d9488;background:#effaf8;box-shadow:0 8px 22px #0d948817;transform:translateY(-2px)}
+.role-icon{height:36px;width:36px;border-radius:11px;background:#e8f5f2;color:#087b70;display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+.role-card b{display:block;font:700 13px Manrope;margin-bottom:4px}
+.role-card small{color:#7a8998;font-size:10px}
+.login-action{margin-top:23px}
+.login-action button{width:100%;padding:12px;border:0;border-radius:11px;background:#0d9488;color:#fff;font-weight:800}
+.login-action button:disabled{background:#b9c9cd;cursor:not-allowed}
+.login-hint{text-align:center;color:#8292a2;font-size:10px;margin-top:13px}
+.login-foot{display:none}
+@media(max-width:760px){#loginScreen{padding:14px;align-items:flex-start}.login-shell{grid-template-columns:1fr;border-radius:20px;margin:auto}.login-intro{min-height:0;padding:24px 24px 20px}.login-intro h1{font-size:25px;margin:24px 0 8px}.login-intro p{font-size:11px;margin:0}.login-points,.login-copy{display:none}.login-intro:after{font-size:110px;bottom:-18px}.login-select{padding:25px 21px}.login-select h2{font-size:20px}.role-card{min-height:112px;padding:13px}.role-grid{gap:9px}}
+
 :root{--navy:#102b46;--navy2:#173d5e;--teal:#0d9488;--teal-soft:#e6f6f3;--bg:#f4f7fb;--surface:#fff;--ink:#172b40;--muted:#708195;--line:#e5ebf1;--orange:#d97706;--red:#dc4c4c;--green:#16845b;--shadow:0 12px 32px rgba(16,43,70,.07);--radius:16px;color-scheme:light}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 'DM Sans',sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #7dd3c7;outline-offset:2px}
 .app{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:254px;background:linear-gradient(165deg,#102b46,#123957 72%,#0f554f);color:#eaf2f8;padding:24px 16px;display:flex;flex-direction:column;z-index:5}.brand{display:flex;gap:12px;align-items:center;padding:2px 10px 26px;border-bottom:1px solid #ffffff20}.brandmark{width:42px;height:42px;border-radius:13px;background:#d8f4ef;color:#0d635c;display:grid;place-items:center;font:800 19px Manrope}.brand strong{display:block;font:800 14px Manrope;letter-spacing:.2px}.brand small{color:#a9c2d4;font-size:11px}.navlabel{font-size:10px;letter-spacing:1.4px;color:#89a7bc;font-weight:700;padding:23px 12px 8px}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#c5d5e1;border-radius:10px;text-align:left;padding:11px 12px;display:flex;align-items:center;gap:12px;font-weight:600;transition:.18s}.nav button:hover{background:#ffffff12;color:#fff}.nav button.active{background:#ffffff1c;color:#fff;box-shadow:inset 3px 0 #64d5c5}.nav .ico{width:20px;text-align:center;font-size:16px}.sidefoot{margin-top:auto;padding:14px 10px 0;border-top:1px solid #ffffff20;color:#a9c2d4;font-size:11px}.sidefoot b{display:block;color:#fff;font-size:12px;margin-bottom:3px}
@@ -20,9 +50,36 @@
 @media(max-width:760px){.sidebar{transform:translateX(-100%);transition:.22s;width:270px;box-shadow:20px 0 40px #102b4630}.sidebar.open{transform:translateX(0)}.mainwrap{margin-left:0}.topbar{height:64px;padding:0 16px}.mobile-toggle{display:block}.content{padding:22px 15px 90px}.pagehead{align-items:flex-start;flex-direction:column}.pagehead h1{font-size:22px}.top-actions{gap:7px}.rolebox{max-width:142px}.columns,.columns.equal{grid-template-columns:1fr}.kpis{gap:9px}.kpi{padding:13px}.kpi strong{font-size:23px}.kpi-top{font-size:10px}.kpi-icon{width:27px;height:27px}.panel{padding:14px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.mobile-nav{display:block;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));z-index:6}.mobile-nav .nav{display:flex;justify-content:space-around}.mobile-nav button{display:grid;justify-items:center;gap:2px;color:var(--muted);font-size:9px;padding:4px 8px}.mobile-nav button.active{background:var(--teal-soft);color:var(--teal)}.mobile-nav .ico{font-size:17px}.sidefoot{margin-top:20px}}
 @media(max-width:390px){.kpis{grid-template-columns:1fr 1fr}.kpi strong{font-size:21px}.rolebox{font-size:10px}}
 </style></head>
-<body><div class="app">
+<body>
+<div id="loginScreen">
+ <div class="login-shell">
+  <section class="login-intro">
+   <div>
+    <div class="login-brand"><div class="login-mark">SPA</div><div><b style="font:800 14px Manrope;display:block">SIM–SPA PRODI</b><small style="color:#b8d3dc">PROGRAM STUDI AKUNTANSI</small></div></div>
+    <h1>Kelola Sarana<br>& Prasarana<br>Lebih Terarah.</h1>
+    <p>Sistem Informasi Manajemen Sarana dan Prasarana Program Studi Akuntansi untuk mendukung pengelolaan aset, fasilitas, dan layanan prodi.</p>
+    <div class="login-points"><div class="login-point"><span>▣</span>Inventaris aset dan pemeliharaan terstruktur</div><div class="login-point"><span>⇄</span>Layanan peminjaman dan persetujuan</div><div class="login-point"><span>▧</span>Pelaporan dan pemantauan terintegrasi</div></div>
+   </div>
+   <div class="login-copy">© 2026 SIM-SPA Prodi Akuntansi · Sistem Informasi Sarana & Prasarana</div>
+  </section>
+  <section class="login-select">
+   <div class="eyebrow">SELAMAT DATANG</div>
+   <h2>Masuk ke SIM-SPA</h2>
+   <p>Pilih jenis akun atau peran Anda untuk melanjutkan ke sistem.</p>
+   <div class="role-grid" id="roleGrid">
+    <button type="button" class="role-card" data-role="admin"><span class="role-icon">⚙</span><b>Admin Prodi</b><small>Pengelolaan data dan operasional sistem</small></button>
+    <button type="button" class="role-card" data-role="dosen"><span class="role-icon">♙</span><b>Dosen / Pengguna</b><small>Peminjaman aset dan pelaporan fasilitas</small></button>
+    <button type="button" class="role-card" data-role="pimpinan"><span class="role-icon">▤</span><b>Pimpinan Prodi</b><small>Monitoring dan persetujuan usulan</small></button>
+    <button type="button" class="role-card" data-role="petugas"><span class="role-icon">✳</span><b>Petugas Kebersihan</b><small>Checklist kebersihan dan tindak lanjut</small></button>
+   </div>
+   <div class="login-action"><button id="loginContinue" disabled>Pilih peran untuk melanjutkan →</button></div>
+   <div class="login-hint">Akses sistem sesuai peran dan tanggung jawab masing-masing.</div>
+  </section>
+ </div>
+</div>
+<div class="app" id="appShell" hidden>
 <aside class="sidebar" id="sidebar"><div class="brand"><div class="brandmark">SPA</div><div><strong>SIM–SPA PRODI</strong><small>Akuntansi · Sarana & Prasarana</small></div></div><div class="navlabel">MENU UTAMA</div><div class="nav" id="sideNav"></div><div class="sidefoot"><b>Program Studi Akuntansi</b>Sistem informasi pengelolaan sarpras<br><span id="storageState">Penyimpanan perangkat aktif</span></div></aside>
-<div class="mainwrap"><header class="topbar"><div style="display:flex;align-items:center;gap:13px"><button class="mobile-toggle" id="toggle">☰</button><div class="crumb">Sistem Informasi / <b id="crumb">Ringkasan Dashboard</b></div></div><div class="top-actions"><select class="rolebox" id="role"><option value="admin">Admin Prodi</option><option value="dosen">Dosen / Pengguna</option><option value="pimpinan">Pimpinan Prodi</option><option value="petugas">Petugas Kebersihan</option></select><div class="avatar" id="avatar">A</div></div></header><main class="content" id="content"></main></div>
+<div class="mainwrap"><header class="topbar"><div style="display:flex;align-items:center;gap:13px"><button class="mobile-toggle" id="toggle">☰</button><div class="crumb">Sistem Informasi / <b id="crumb">Ringkasan Dashboard</b></div></div><div class="top-actions"><span class="rolebox" id="activeRoleLabel">Admin Prodi</span><button class="btn sm" data-action="logout">Keluar ↗</button><div class="avatar" id="avatar">A</div></div></header><main class="content" id="content"></main></div>
 <div class="mobile-nav"><div class="nav" id="mobileNav"></div></div>
 </div><div class="modalback" id="modalback" hidden><section class="modal" id="modal"></section></div><script>
 'use strict';
@@ -31,7 +88,7 @@ const CONDITIONS=['Baik','Rusak Ringan','Rusak Sedang','Rusak Berat','Tidak Dapa
 const CATEGORIES=['TI','Perabot','Laboratorium','Kantor','Penunjang'];
 const ROLES={admin:'Admin Prodi',dosen:'Dosen / Pengguna',pimpinan:'Pimpinan Prodi',petugas:'Petugas Kebersihan'};
 const NAV=[['dash','▦','Dashboard','admin pimpinan dosen petugas'],['aset','▣','Aset Tetap','admin dosen pimpinan'],['stok','▤','Persediaan','admin pimpinan'],['pinjam','⇄','Peminjaman','admin dosen pimpinan'],['rusak','⚒','Perbaikan','admin dosen pimpinan petugas'],['mutasi','⇢','Mutasi & Penghapusan','admin pimpinan'],['bersih','✳','Kebersihan','admin dosen pimpinan petugas'],['ruang','⌂','Ruangan','admin pimpinan'],['lap','▧','Laporan','admin pimpinan'],['log','☷','Log Aktivitas','admin']];
-let S,role='admin',view='dash',query='',report='Inventaris';
+let S,role='admin',view='dash',query='',report='Inventaris',chosenRole=null;
 const today=()=>new Date().toISOString().slice(0,10),year=new Date().getFullYear(),id=()=>Math.random().toString(36).slice(2,9);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'Rp '+Math.round(Number(n)||0).toLocaleString('id-ID');
@@ -84,6 +141,7 @@ function openForm(title,description,fields,onSave){let html=`<h2>${title}</h2><p
 function openInfo(html){document.getElementById('modal').innerHTML=html+`<div class="modalfoot"><button class="btn" data-action="modal-close">Tutup</button></div>`;document.getElementById('modalback').hidden=false}
 function closeModal(){document.getElementById('modalback').hidden=true}
 function act(key){let [t,p,ref]=key.split('|'),a=asset(p);switch(t){
+case'logout':logout();return;
 case'nav':view=p;query='';document.getElementById('sidebar').classList.remove('open');render();return;
 case'modal-close':closeModal();return;
 case'asset-add':return openForm('Tambah aset tetap','Masukkan identitas dan informasi perolehan aset.',[{name:'nama',label:'Nama barang'},{name:'kat',label:'Kategori',type:'select',options:CATEGORIES},{name:'ruang',label:'Lokasi ruangan',type:'select',options:S.rooms.map(r=>[r.id,r.nama])},{name:'thn',label:'Tahun perolehan',type:'number',value:year,min:1900},{name:'nilai',label:'Nilai perolehan (Rp)',type:'number',min:0},{name:'umur',label:'Umur ekonomis (tahun)',type:'number',value:5,min:1},{name:'sumber',label:'Sumber perolehan',type:'select',options:['Pembelian','Hibah','Bantuan']},{name:'sn',label:'Merek / tipe / nomor seri',required:false},{name:'pj',label:'Penanggung jawab'}],d=>{let code=`PRD-${d.kat.slice(0,3).toUpperCase()}-${d.thn}-${String(S.assets.length+1).padStart(3,'0')}`;S.assets.push({id:id(),kode:code,nama:d.nama,kat:d.kat,ruang:d.ruang,kondisi:'Baik',status:'Aktif',thn:+d.thn,nilai:+d.nilai,umur:Math.max(1,+d.umur),sumber:d.sumber,sn:d.sn,pj:d.pj});log('Tambah aset '+code,code)});
@@ -105,10 +163,14 @@ case'clean-fix':S.clean.forEach(c=>{if(c.room===p&&c.tipe==='keluhan')c.selesai=
 case'export':return exportCSV();
 }}
 function exportCSV(){let [h,get]=reports[report],rows=get().filter(r=>!query||r.join(' ').toLowerCase().includes(query.toLowerCase()));let csv=[h,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');let blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='laporan-sim-spa-'+report.toLowerCase().replaceAll(' ','-')+'-'+today()+'.csv';a.click();URL.revokeObjectURL(url);toast('Laporan CSV berhasil diunduh')}
-function render(){let visible=NAV.filter(n=>n[3].split(' ').includes(role));if(!visible.some(n=>n[0]===view))view='dash';let nav=visible.map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2]}</span></button>`).join('');document.getElementById('sideNav').innerHTML=nav;document.getElementById('mobileNav').innerHTML=visible.slice(0,5).map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2].split(' ')[0]}</span></button>`).join('');document.getElementById('content').innerHTML=V[view]();document.getElementById('crumb').textContent=(NAV.find(n=>n[0]===view)||[])[2]||'Dashboard';document.getElementById('avatar').textContent=ROLES[role][0];}
+function render(){let visible=NAV.filter(n=>n[3].split(' ').includes(role));if(!visible.some(n=>n[0]===view))view='dash';let nav=visible.map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2]}</span></button>`).join('');document.getElementById('sideNav').innerHTML=nav;document.getElementById('mobileNav').innerHTML=visible.slice(0,5).map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2].split(' ')[0]}</span></button>`).join('');document.getElementById('content').innerHTML=V[view]();document.getElementById('crumb').textContent=(NAV.find(n=>n[0]===view)||[])[2]||'Dashboard';document.getElementById('avatar').textContent=ROLES[role][0];document.getElementById('activeRoleLabel').textContent=ROLES[role];}
 document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if(b)act(b.dataset.action)});
 document.addEventListener('input',e=>{if(e.target.id==='search'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById('search');if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
-document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}if(e.target.id==='role'){role=e.target.value;view='dash';render()}});
+document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
 document.getElementById('toggle').onclick=()=>document.getElementById('sidebar').classList.toggle('open');document.getElementById('modalback').addEventListener('click',e=>{if(e.target.id==='modalback')closeModal()});
-load();render();
+function showLogin(){document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;chosenRole=null;document.querySelectorAll('.role-card').forEach(x=>x.classList.remove('selected'));document.getElementById('loginContinue').disabled=true;document.getElementById('loginContinue').textContent='Pilih peran untuk melanjutkan →'}
+function logout(){showLogin()}
+document.getElementById('roleGrid').addEventListener('click',e=>{const card=e.target.closest('[data-role]');if(!card)return;chosenRole=card.dataset.role;document.querySelectorAll('.role-card').forEach(x=>x.classList.toggle('selected',x===card));document.getElementById('loginContinue').disabled=false;document.getElementById('loginContinue').textContent='Lanjutkan sebagai '+ROLES[chosenRole]+' →'});
+document.getElementById('loginContinue').addEventListener('click',()=>{if(!chosenRole)return;role=chosenRole;view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;render()});
+load();showLogin();
 </script></body></html>
