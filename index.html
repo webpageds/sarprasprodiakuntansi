@@ -186,7 +186,12 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #loginForm input{padding:12px 13px;border:1px solid #dce5eb;border-radius:10px}
 #loginForm input:focus{border-color:#0d9488;outline:3px solid #7dd3c733}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
-</style></head>
+</style><script>
+/* Isi URL /exec setelah deployment Apps Script. */
+window.SIMSPA_API_URL = window.SIMSPA_API_URL || '';
+</script>
+
+</head>
 <body>
 <!--
  SIM-SPA LOGIN HOTFIX:
