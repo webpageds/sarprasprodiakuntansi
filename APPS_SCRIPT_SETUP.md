@@ -68,3 +68,13 @@ URL Web App perlu dipasang ke frontend dan semua modul perlu dialihkan dari loca
 - Periksa aturan akses dan validasi data sesuai kebijakan kampus sebelum digunakan untuk data penting.
 - Apps Script mempunyai kuota dan batas eksekusi; cek kuota resmi Google sebelum operasional skala besar.
 - Backup spreadsheet secara berkala.
+
+
+## Integrasi frontend bersama (pembaruan)
+- Frontend GitHub Pages sudah dikonfigurasi dengan URL Web App yang diberikan pemilik project.
+- Frontend meminta daftar modul dari action `list` setelah login dan mengirim perubahan melalui action `sync`.
+- Data aplikasi disimpan sebagai JSON pada tab `AppData` agar struktur data lama di frontend tetap terjaga.
+- **Wajib:** salin ulang versi terbaru `apps-script/Code.gs` dari GitHub ke editor Apps Script, simpan, jalankan `initializeDatabase` sekali untuk membuat tab `AppData`, lalu Deploy > Manage deployments > Edit > New version > Deploy.
+- Jika hanya frontend yang diperbarui tetapi backend deployment lama masih aktif, login mungkin berhasil tetapi sinkronisasi modul akan gagal karena action `sync` belum tersedia di versi deployment tersebut.
+- Pada login pertama, frontend mengambil data yang sudah ada di AppData; ia tidak lagi menginisialisasi data contoh lokal.
+- Uji koneksi browser diperlukan karena browser dapat membatasi request lintas domain ke Apps Script. Jika Console menampilkan CORS/network error, integrasi perlu disesuaikan dengan mekanisme proxy/host yang didukung.
