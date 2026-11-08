@@ -285,7 +285,7 @@ function listRecords_(user,module) {
   const sh = sheet_('AppData'), values = sh.getDataRange().getValues();
   let rows = values.length < 2 ? [] : values.slice(1).filter(r => String(r[0]) === String(module))
     .map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean);
-  if (module === 'assets' && !rows.length) rows = records_('Assets').map(adaptAssetRecord_).filter(a => a.nama);
+  if (module === 'assets') rows = (rows.length ? rows : records_('Assets')).map(adaptAssetRecord_).filter(a => a.nama);
   if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
     rows = rows.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
   }
@@ -323,8 +323,8 @@ function listManyRecords_(user, modules) {
       .filter(row => String(row[0]) === String(module))
       .map(row => { try { return JSON.parse(row[2]); } catch(e) { return null; } })
       .filter(Boolean);
-    if (module === 'assets' && !records.length) {
-      records = records_('Assets').map(adaptAssetRecord_).filter(a => a.nama);
+    if (module === 'assets') {
+      records = (records.length ? records : records_('Assets')).map(adaptAssetRecord_).filter(a => a.nama);
     }
     if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
       records = records.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
