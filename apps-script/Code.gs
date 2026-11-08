@@ -20,7 +20,8 @@ const CONFIG = {
     AssetDisposals: ['id','assetId','quantity','date','reason','approvedBy','notes','createdAt'],
     CleaningRecords: ['id','roomId','roomName','officerId','officerName','date','shift','status','notes','createdAt'],
     ActivityLogs: ['id','userId','userName','action','module','recordId','details','createdAt'],
-    AppData: ['module','id','payload','updatedAt','updatedBy']
+    AppData: ['module','id','payload','updatedAt','updatedBy'],
+    ProcurementRequests: ['id','name','unit','quantity','requester','notes','semester','status','source']
   }
 };
 
@@ -47,6 +48,7 @@ function doPost(e) {
     else if (action === 'changePassword') result = changePassword_(body);
     else if (action === 'adminListUsers') result = adminListUsers_(authenticate_(body.token));
     else if (action === 'adminResetPassword') result = adminResetPassword_(authenticate_(body.token),body);
+    else if (action === 'adminAssignAssetOwner') result = adminAssignAssetOwner_(authenticate_(body.token),body);
     else {
       const user = authenticate_(body.token);
       if (action === 'logout') {
@@ -234,6 +236,52 @@ function changePassword_(body) {
   return {ok:true,message:'Password berhasil diperbarui.'};
 }
 
+function importSarprasStagingData() {
+  const ss = spreadsheet_();
+  const source = ss.getSheetByName('SIMSPA_ImportData');
+  if (!source) throw new Error('Tab SIMSPA_ImportData belum ada. Impor file SIMSPA_Paket_Import_Data.xlsx ke spreadsheet ini terlebih dahulu.');
+  const rows = source.getDataRange().getValues();
+  if (rows.length < 2) throw new Error('Tab SIMSPA_ImportData belum berisi baris data.');
+  const headers = rows[0].map(String);
+  const ix = key => headers.indexOf(key);
+  if ([ix('module'),ix('id'),ix('payload')].some(n=>n<0)) throw new Error('Header SIMSPA_ImportData harus memuat module, id, payload.');
+  const allowed = new Set(['rooms','assets','stock','repairs','proc']);
+  const prepared = [];
+  rows.slice(1).forEach((r,i)=>{
+    const module = String(r[ix('module')]||'').trim();
+    const id = String(r[ix('id')]||'').trim();
+    const raw = String(r[ix('payload')]||'');
+    if (!module && !id && !raw) return;
+    if (!allowed.has(module)) throw new Error('Modul tidak diizinkan pada baris '+(i+2)+': '+module);
+    if (!id || !raw) throw new Error('ID/payload kosong pada baris '+(i+2));
+    let payload;
+    try { payload = JSON.parse(raw); } catch(e) { throw new Error('JSON tidak valid pada baris '+(i+2)); }
+    if (String(payload.id||'') !== id) throw new Error('ID payload tidak sama dengan kolom ID pada baris '+(i+2));
+    prepared.push({module,id,payload});
+  });
+  if (!prepared.length) throw new Error('Tidak ada data valid untuk diimpor.');
+  const appData = sheet_('AppData');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const values = appData.getDataRange().getValues();
+    const index = new Map();
+    values.forEach((r,i)=>{ if(i>0) index.set(String(r[0])+'|'+String(r[1]),i+1); });
+    const now = new Date().toISOString();
+    let inserted=0,updated=0;
+    prepared.forEach(item=>{
+      const key=item.module+'|'+item.id;
+      const row=[item.module,item.id,JSON.stringify(item.payload),now,'import-staging'];
+      const rowNo=index.get(key);
+      if(rowNo){appData.getRange(rowNo,1,1,5).setValues([row]);updated++;}
+      else {appData.appendRow(row);inserted++;}
+    });
+    const summary = prepared.reduce((o,x)=>{o[x.module]=(o[x.module]||0)+1;return o;},{});
+    console.log('SIM-SPA import selesai: '+JSON.stringify({inserted,updated,modules:summary}));
+    return {ok:true,inserted,updated,modules:summary};
+  } finally { lock.releaseLock(); }
+}
+
 function adminListUsers_(admin) {
   if (String(admin.role) !== 'admin') throw new Error('Hanya Admin Prodi yang dapat mengelola akun.');
   const users = records_('Users').map(u => ({
@@ -267,6 +315,31 @@ function adminResetPassword_(admin,body) {
   const target={userId,name:String(values[idx][headers.indexOf('name')]||''),role:String(values[idx][headers.indexOf('role')]||'')};
   log_(admin,'Reset password','Users',userId,'Admin mengatur ulang password akun '+target.name+' ('+target.role+').');
   return {ok:true,message:'Password berhasil diatur ulang. Pengguna wajib menggantinya saat login berikutnya.'};
+}
+
+function adminAssignAssetOwner_(admin,body) {
+  if (String(admin.role) !== 'admin') throw new Error('Hanya Admin Prodi yang dapat menautkan aset ke akun dosen.');
+  const assetId=String(body.assetId||'').trim();
+  const userId=String(body.userId||'').trim();
+  if(!assetId) throw new Error('Aset belum dipilih.');
+  let owner=null;
+  if(userId){
+    owner=records_('Users').find(u=>String(u.userId)===userId && String(u.active)!=='false');
+    if(!owner) throw new Error('Akun pengguna tidak ditemukan atau tidak aktif.');
+    if(!['dosen','pimpinan'].includes(String(owner.role))) throw new Error('Aset hanya dapat ditautkan ke akun Dosen atau Pimpinan.');
+  }
+  const sh=sheet_('AppData'), values=sh.getDataRange().getValues();
+  const rowNo=values.findIndex((r,i)=>i>0 && String(r[0])==='assets' && String(r[1])===assetId);
+  if(rowNo<1) throw new Error('Data aset tidak ditemukan di AppData.');
+  let payload;
+  try{payload=JSON.parse(values[rowNo][2]);}catch(e){throw new Error('Payload aset tidak valid.');}
+  payload.assignedToUserId=owner?String(owner.userId):'';
+  payload.assignedToName=owner?String(owner.name):'';
+  sh.getRange(rowNo+1,3).setValue(JSON.stringify(payload));
+  sh.getRange(rowNo+1,4).setValue(new Date().toISOString());
+  sh.getRange(rowNo+1,5).setValue(admin.userId);
+  log_(admin,'Tautkan aset ke dosen','Assets',assetId,owner?'Ditautkan ke '+owner.name+' ('+owner.username+').':'Tautan akun dosen dilepas.');
+  return {ok:true,assetId,assignedToUserId:payload.assignedToUserId,assignedToName:payload.assignedToName};
 }
 
 function authenticate_(token) {
@@ -307,7 +380,14 @@ function adaptAssetRecord_(asset) {
     umur:Number(a.umur || 5),
     sumber:String(a.sumber || a.source || ''),
     sn:String(a.sn || a.brand || ''),
-    pj:String(a.pj || a.responsiblePerson || '')
+    pj:String(a.pj || a.responsiblePerson || ''),
+    jumlah:Number(a.jumlah !== undefined ? a.jumlah : a.quantity || 1),
+    satuan:String(a.satuan || a.unit || 'unit'),
+    notes:String(a.notes || a.catatan || ''),
+    ownerLabel:String(a.ownerLabel || a.pj || ''),
+    assignedToUserId:String(a.assignedToUserId || ''),
+    assignedToName:String(a.assignedToName || ''),
+    loanable:a.loanable !== false
   };
 }
 
@@ -413,7 +493,7 @@ function assertRead_(user,sheetName) {
     CleaningRecords:['admin','pimpinan','dosen','petugas'],
     StockItems:['admin','pimpinan'], StockTransactions:['admin','pimpinan'],
     AssetMutations:['admin','pimpinan'], AssetDisposals:['admin','pimpinan'],
-    ActivityLogs:['admin','pimpinan']
+    ActivityLogs:['admin','pimpinan'], ProcurementRequests:['admin','pimpinan']
   };
   if (!(map[sheetName] || all).includes(role)) throw new Error('Akses baca ditolak.');
 }
@@ -432,7 +512,7 @@ function assertWrite_(user,sheetName,operation) {
 }
 
 function moduleToSheet_(module) {
-  const map={assets:'Assets',rooms:'Rooms',stockItems:'StockItems',stockTransactions:'StockTransactions',loans:'Loans',repairs:'Repairs',assetMutations:'AssetMutations',assetDisposals:'AssetDisposals',cleaningRecords:'CleaningRecords',activityLogs:'ActivityLogs',stock:'StockItems',tx:'StockTransactions',mutasi:'AssetMutations',hapus:'AssetDisposals',clean:'CleaningRecords',log:'ActivityLogs'};
+  const map={assets:'Assets',rooms:'Rooms',stockItems:'StockItems',stockTransactions:'StockTransactions',loans:'Loans',repairs:'Repairs',assetMutations:'AssetMutations',assetDisposals:'AssetDisposals',cleaningRecords:'CleaningRecords',activityLogs:'ActivityLogs',proc:'ProcurementRequests',stock:'StockItems',tx:'StockTransactions',mutasi:'AssetMutations',hapus:'AssetDisposals',clean:'CleaningRecords',log:'ActivityLogs'};
   const name=map[String(module||'')]; if(!name) throw new Error('Modul tidak valid.'); return name;
 }
 function records_(name) {
