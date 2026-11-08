@@ -188,6 +188,12 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
 </style></head>
 <body>
+<!--
+ SIM-SPA LOGIN HOTFIX:
+ The page always starts at the credential form. No role picker or stored session is restored.
+ Backend authentication is not yet wired to data CRUD; configure SIMSPA_API_URL only after Apps Script endpoint is deployed.
+-->
+
 <div id="loginScreen">
  <div class="login-shell">
   <section class="login-intro">
@@ -414,6 +420,6 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  }catch(error){err.textContent=error.message||'Terjadi kesalahan saat login.';err.style.display='block'}
  finally{btn.disabled=false;btn.textContent='Masuk'}
 });
-load();showLogin();
+showLogin();
 
 </script></body></html>
