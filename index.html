@@ -179,6 +179,13 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+/* Real account login refresh */
+#loginForm{margin-top:18px}
+#loginForm .field{margin:0 0 15px}
+#loginForm .field label{color:#64778a;font-size:11px;font-weight:700;display:block;margin-bottom:6px}
+#loginForm input{padding:12px 13px;border:1px solid #dce5eb;border-radius:10px}
+#loginForm input:focus{border-color:#0d9488;outline:3px solid #7dd3c733}
+#loginSubmit:disabled{opacity:.65;cursor:wait}
 </style></head>
 <body>
 <div id="loginScreen">
@@ -195,15 +202,14 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   <section class="login-select">
    <div class="eyebrow">SELAMAT DATANG</div>
    <h2>Masuk ke SIM-SPA</h2>
-   <p>Pilih jenis akun atau peran Anda untuk melanjutkan ke sistem.</p>
-   <div class="role-grid" id="roleGrid">
-    <button type="button" class="role-card" data-role="admin"><span class="role-icon">⚙</span><b>Admin Prodi</b><small>Pengelolaan data dan operasional sistem</small></button>
-    <button type="button" class="role-card" data-role="dosen"><span class="role-icon">♙</span><b>Dosen / Pengguna</b><small>Peminjaman aset dan pelaporan fasilitas</small></button>
-    <button type="button" class="role-card" data-role="pimpinan"><span class="role-icon">▤</span><b>Pimpinan Prodi</b><small>Monitoring dan persetujuan usulan</small></button>
-    <button type="button" class="role-card" data-role="petugas"><span class="role-icon">✳</span><b>Petugas Kebersihan</b><small>Checklist kebersihan dan tindak lanjut</small></button>
-   </div>
-   <div class="login-action"><button id="loginContinue" disabled>Pilih peran untuk melanjutkan →</button></div>
-   <div class="login-hint">Akses sistem sesuai peran dan tanggung jawab masing-masing.</div>
+   <p>Gunakan akun yang telah didaftarkan oleh Administrator.</p>
+   <form id="loginForm" autocomplete="on">
+    <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" name="username" type="email" autocomplete="username" placeholder="nama@kampus.ac.id" required></div>
+    <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required></div>
+    <div id="loginError" role="alert" style="display:none;color:#b83838;background:#fff1f1;border:1px solid #f4d5d5;padding:10px;border-radius:9px;font-size:11px;margin-top:12px"></div>
+    <div class="login-action"><button id="loginSubmit" type="submit">Masuk</button></div>
+   </form>
+   <div class="login-hint">Role ditentukan oleh akun administrator, bukan dipilih sendiri.</div>
   </section>
  </div>
 </div>
@@ -229,7 +235,7 @@ const NAV=[
  ['lap','▧','Laporan','admin pimpinan','Rekapitulasi dan ekspor data'],
  ['log','☷','Log Aktivitas','admin pimpinan','Riwayat aktivitas sistem']
 ];
-let S,role='admin',view='dash',query='',report='Inventaris',chosenRole=null;
+let S,role='dosen',view='dash',query='',report='Inventaris',currentUser=null;
 const today=()=>new Date().toISOString().slice(0,10),year=new Date().getFullYear(),id=()=>Math.random().toString(36).slice(2,9);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'Rp '+Math.round(Number(n)||0).toLocaleString('id-ID');
@@ -378,9 +384,36 @@ document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if
 document.addEventListener('input',e=>{if(e.target.id==='search'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById('search');if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
 document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
 document.getElementById('toggle').onclick=()=>document.getElementById('sidebar').classList.toggle('open');document.getElementById('modalback').addEventListener('click',e=>{if(e.target.id==='modalback')closeModal()});
-function showLogin(){document.getElementById('appShell').hidden=true;document.getElementById('loginScreen').hidden=false;chosenRole=null;document.querySelectorAll('.role-card').forEach(x=>x.classList.remove('selected'));document.getElementById('loginContinue').disabled=true;document.getElementById('loginContinue').textContent='Pilih peran untuk melanjutkan →'}
-function logout(){showLogin()}
-document.getElementById('roleGrid').addEventListener('click',e=>{const card=e.target.closest('[data-role]');if(!card)return;chosenRole=card.dataset.role;document.querySelectorAll('.role-card').forEach(x=>x.classList.toggle('selected',x===card));document.getElementById('loginContinue').disabled=false;document.getElementById('loginContinue').textContent='Lanjutkan sebagai '+ROLES[chosenRole]+' →'});
-document.getElementById('loginContinue').addEventListener('click',()=>{if(!chosenRole)return;role=chosenRole;view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;render()});
+function showLogin(message=''){
+ document.getElementById('appShell').hidden=true;
+ document.getElementById('loginScreen').hidden=false;
+ currentUser=null;
+ role='dosen';
+ const err=document.getElementById('loginError');
+ if(err){err.textContent=message;err.style.display=message?'block':'none'}
+ const form=document.getElementById('loginForm'); if(form) form.reset();
+}
+function logout(){try{sessionStorage.removeItem('simspaSession')}catch(e){}showLogin('Anda telah keluar dari SIM-SPA.')}
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const email=document.getElementById('loginEmail').value.trim();
+ const password=document.getElementById('loginPassword').value;
+ const btn=document.getElementById('loginSubmit'),err=document.getElementById('loginError');
+ btn.disabled=true;btn.textContent='Memeriksa akun...';err.style.display='none';
+ try{
+   if(!window.SIMSPA_API_URL) throw new Error('Backend belum dikonfigurasi. Administrator perlu memasang URL Web App Apps Script pada konfigurasi aplikasi.');
+   const response=await fetch(window.SIMSPA_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',email,password})});
+   const result=await response.json();
+   if(!result.ok) throw new Error(result.error||'Login gagal. Periksa email dan password.');
+   if(!result.token||!result.user||!ROLES[result.user.role]) throw new Error('Respons akun tidak valid atau role belum dikenali.');
+   currentUser=result.user;role=result.user.role;
+   sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
+   view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;
+   document.getElementById('activeRoleLabel').textContent=(result.user.name||ROLES[role])+' · '+ROLES[role];
+   render();
+ }catch(error){err.textContent=error.message||'Terjadi kesalahan saat login.';err.style.display='block'}
+ finally{btn.disabled=false;btn.textContent='Masuk'}
+});
 load();showLogin();
+
 </script></body></html>
