@@ -22,6 +22,8 @@ const CONFIG = {
   }
 };
 
+function initializeDatabase() { return bootstrap_(); }
+
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'health';
   if (action === 'health') return json_({ok:true, app:CONFIG.APP_NAME, message:'API aktif'});
