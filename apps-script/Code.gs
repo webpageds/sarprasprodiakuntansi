@@ -9,7 +9,7 @@ const CONFIG = {
   TOKEN_TTL_SECONDS: 21600,
   SHEETS: {
     Users: ['userId','name','email','username','nuptk','passwordHash','salt','role','active','mustChangePassword','createdAt','updatedAt'],
-    LecturerRoster: ['name','nuptk','role'],
+    LecturerRoster: ['name','nuptk','role','email'],
     Assets: ['id','assetCode','name','category','brand','roomId','condition','quantity','unit','purchaseDate','purchaseValue','source','notes','createdAt','updatedAt'],
     Rooms: ['id','name','building','floor','capacity','notes','createdAt','updatedAt'],
     StockItems: ['id','name','category','unit','minimumStock','currentStock','notes','createdAt','updatedAt'],
@@ -133,28 +133,30 @@ function appendObject_(sheetName, object) {
 function importLecturersFromRosterSheet() {
   migrateUsersSchema();
   const roster = records_('LecturerRoster');
-  if (!roster.length) throw new Error('Tab LecturerRoster masih kosong. Isi kolom name, nuptk, role terlebih dahulu.');
+  if (!roster.length) throw new Error('Tab LecturerRoster masih kosong. Isi name, nuptk, role, dan email bila role petugas.');
   const existing = records_('Users');
   const issued = [];
   roster.forEach(person => {
     const name = String(person.name || '').trim();
-    const nuptk = String(person.nuptk || '').replace(/\D/g,'');
+    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
     const requestedRole = String(person.role || 'dosen').trim().toLowerCase();
-    const role = requestedRole === 'pimpinan' ? 'pimpinan' : 'dosen';
-    if (!name || !/^\d{16}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid: '+name);
-    if (existing.some(row => String(row.nuptk || '') === nuptk)) return;
+    const role = ['dosen','pimpinan','petugas'].includes(requestedRole) ? requestedRole : '';
+    const email = String(person.email || '').trim().toLowerCase();
+    if (!name || !role) throw new Error('Nama atau role tidak valid: '+name);
+    if (['dosen','pimpinan'].includes(role) && !/^\\d{16}$/.test(nuptk)) throw new Error('NUPTK harus 16 digit untuk '+name);
+    if (role === 'petugas' && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Petugas harus memiliki email yang valid: '+name);
+    if (existing.some(row => (nuptk && String(row.nuptk || '') === nuptk) || (email && String(row.email || '').toLowerCase() === email))) return;
     const salt = Utilities.getUuid().replace(/-/g,'');
     const temporaryPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
     appendObject_('Users',{
-      userId:Utilities.getUuid(),name,email:'',username:nuptk,nuptk,
-      passwordHash:hashPassword_(temporaryPassword,salt),salt,role,active:true,
+      userId:Utilities.getUuid(),name,email:role==='petugas'?email:'',username:role==='petugas'?email:nuptk,
+      nuptk:role==='petugas'?'':nuptk,passwordHash:hashPassword_(temporaryPassword,salt),salt,role,active:true,
       mustChangePassword:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
     });
-    issued.push({name,nuptk,role,temporaryPassword});
+    issued.push({name,loginId:role==='petugas'?email:nuptk,role,temporaryPassword});
   });
-  // One-time output only: plaintext temporary passwords are not saved in any sheet.
-  console.log('SIM-SPA INITIAL CREDENTIALS (deliver privately, then delete this execution log): '+JSON.stringify(issued));
-  return {ok:true,created:issued.length,skipped:roster.length-issued.length,notice:'Password sementara hanya dicetak satu kali pada Execution log.'};
+  console.log('SIM-SPA TEMPORARY CREDENTIALS — bagikan secara pribadi, jangan teruskan log ini: '+JSON.stringify(issued));
+  return {ok:true,created:issued.length,notice:'Password sementara hanya tersedia pada Execution log. Bagikan secara pribadi.'};
 }
 
 function login_(body) {
