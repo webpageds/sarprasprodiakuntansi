@@ -293,7 +293,7 @@ async function apiCall(payload,token){
    else resolve(data.payload);
   };
   window.addEventListener('message',onMessage);
-  timer=setTimeout(()=>{cleanup();reject(new Error('Backend tidak mengirim balasan. Periksa deployment Apps Script dan izinkan Web App berjalan di iframe.'));},30000);
+  timer=setTimeout(()=>{cleanup();reject(new Error('Koneksi ke Apps Script melewati batas 20 detik. Pastikan Code.gs terbaru sudah di-deploy sebagai New version, lalu coba masuk kembali.'));},20000);
   document.body.append(frame,form);
   form.submit();
  });
@@ -304,11 +304,9 @@ async function loadRemoteState(token){
   : currentUser.role==='dosen'
    ? ['rooms','assets','loans','repairs','clean']
    : ['rooms','repairs','clean'];
+ const result=await apiCall({action:'listMany',modules},token);
  const next=emptyState();
- for(const module of modules){
-  const result=await apiCall({action:'list',module},token);
-  next[module]=Array.isArray(result.records)?result.records:[];
- }
+ modules.forEach(module=>{next[module]=Array.isArray(result.records[module])?result.records[module]:[];});
  S=next;
  document.getElementById('storageState').textContent='Terhubung ke database Google Sheets';
 }
@@ -525,7 +523,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
     currentUser=result.user;
     sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
    }
-   btn.textContent='Memuat data...';
+   btn.textContent='Memuat data dari Google Sheets...';
    await loadRemoteState(result.token);
    view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;
    document.getElementById('activeRoleLabel').textContent=(result.user.name||ROLES[role])+' · '+ROLES[role];
