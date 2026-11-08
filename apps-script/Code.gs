@@ -130,30 +130,46 @@ function appendObject_(sheetName, object) {
   sh.appendRow(headers.map(key => object[key] === undefined ? '' : object[key]));
 }
 
+function normalizeRosterRole_(value) {
+  const raw = String(value || '').trim().toLowerCase().replace(/[_-]+/g,' ').replace(/\\s+/g,' ');
+  if (raw === 'dosen' || raw.startsWith('dosen ')) return 'dosen';
+  if (raw === 'pimpinan' || raw.startsWith('pimpinan ')) return 'pimpinan';
+  if (raw === 'petugas' || raw.startsWith('petugas ') || raw === 'petugas kebersihan' || raw.startsWith('petugas kebersihan ')) return 'petugas';
+  return '';
+}
+
 function importLecturersFromRosterSheet() {
   migrateUsersSchema();
   const roster = records_('LecturerRoster');
   if (!roster.length) throw new Error('Tab LecturerRoster masih kosong. Isi name, nuptk, role, dan email bila role petugas.');
   const existing = records_('Users');
-  const issued = [];
-  roster.forEach(person => {
+  const prepared = [];
+  const seen = new Set();
+  // Validate the entire roster first, so a bad row cannot leave a half-imported batch.
+  roster.forEach((person,index) => {
     const name = String(person.name || '').trim();
-    const nuptk = String(person.nuptk || '').replace(/\D/g,'');
-    const requestedRole = String(person.role || 'dosen').trim().toLowerCase();
-    const role = ['dosen','pimpinan','petugas'].includes(requestedRole) ? requestedRole : '';
+    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const role = normalizeRosterRole_(person.role);
     const email = String(person.email || '').trim().toLowerCase();
-    if (!name || !role) throw new Error('Nama atau role tidak valid: '+name);
-    if (['dosen','pimpinan'].includes(role) && !/^\d{16}$/.test(nuptk)) throw new Error('NUPTK harus 16 digit untuk '+name);
-    if (role === 'petugas' && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Petugas harus memiliki email yang valid: '+name);
-    if (existing.some(row => (nuptk && String(row.nuptk || '') === nuptk) || (email && String(row.email || '').toLowerCase() === email))) return;
+    if (!name || !role) throw new Error('Nama atau role tidak valid pada baris '+(index+2)+': '+name+' (role: '+String(person.role||'kosong')+'). Gunakan dosen, pimpinan, atau petugas.');
+    if (['dosen','pimpinan'].includes(role) && !/^\\d{16}$/.test(nuptk)) throw new Error('NUPTK harus 16 digit pada baris '+(index+2)+' untuk '+name);
+    if (role === 'petugas' && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Email petugas belum valid pada baris '+(index+2)+': '+name);
+    const key = role === 'petugas' ? 'email:'+email : 'nuptk:'+nuptk;
+    if (seen.has(key)) throw new Error('Akun duplikat pada roster: '+name+' ('+key+')');
+    seen.add(key);
+    prepared.push({name,nuptk,role,email,key});
+  });
+  const issued = [];
+  prepared.forEach(person => {
+    if (existing.some(row => (person.nuptk && String(row.nuptk || '').replace(/\\D/g,'') === person.nuptk) || (person.email && String(row.email || '').toLowerCase() === person.email))) return;
     const salt = Utilities.getUuid().replace(/-/g,'');
     const temporaryPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
     appendObject_('Users',{
-      userId:Utilities.getUuid(),name,email:role==='petugas'?email:'',username:role==='petugas'?email:nuptk,
-      nuptk:role==='petugas'?'':nuptk,passwordHash:hashPassword_(temporaryPassword,salt),salt,role,active:true,
+      userId:Utilities.getUuid(),name:person.name,email:person.role==='petugas'?person.email:'',username:person.role==='petugas'?person.email:person.nuptk,
+      nuptk:person.role==='petugas'?'':person.nuptk,passwordHash:hashPassword_(temporaryPassword,salt),salt,role:person.role,active:true,
       mustChangePassword:true,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
     });
-    issued.push({name,loginId:role==='petugas'?email:nuptk,role,temporaryPassword});
+    issued.push({name:person.name,loginId:person.role==='petugas'?person.email:person.nuptk,role:person.role,temporaryPassword});
   });
   console.log('SIM-SPA TEMPORARY CREDENTIALS — bagikan secara pribadi, jangan teruskan log ini: '+JSON.stringify(issued));
   return {ok:true,created:issued.length,notice:'Password sementara hanya tersedia pada Execution log. Bagikan secara pribadi.'};
