@@ -138,12 +138,12 @@ function importLecturersFromRosterSheet() {
   const issued = [];
   roster.forEach(person => {
     const name = String(person.name || '').trim();
-    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const nuptk = String(person.nuptk || '').replace(/\D/g,'');
     const requestedRole = String(person.role || 'dosen').trim().toLowerCase();
     const role = ['dosen','pimpinan','petugas'].includes(requestedRole) ? requestedRole : '';
     const email = String(person.email || '').trim().toLowerCase();
     if (!name || !role) throw new Error('Nama atau role tidak valid: '+name);
-    if (['dosen','pimpinan'].includes(role) && !/^\\d{16}$/.test(nuptk)) throw new Error('NUPTK harus 16 digit untuk '+name);
+    if (['dosen','pimpinan'].includes(role) && !/^\d{16}$/.test(nuptk)) throw new Error('NUPTK harus 16 digit untuk '+name);
     if (role === 'petugas' && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Petugas harus memiliki email yang valid: '+name);
     if (existing.some(row => (nuptk && String(row.nuptk || '') === nuptk) || (email && String(row.email || '').toLowerCase() === email))) return;
     const salt = Utilities.getUuid().replace(/-/g,'');
