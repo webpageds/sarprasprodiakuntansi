@@ -87,6 +87,7 @@ Branch `feature/admin-dosen-dashboard-integration` menambahkan:
 - Validasi agar pengguna tidak dapat mengubah atau menghapus record pengguna lain melalui endpoint AppData.
 - Helper `importRosterFromStaffSpreadsheet()` yang membaca tab spreadsheet sumber dengan gid `390669889`, mengenali kolom Nama dan NUPTK, lalu menyalin roster ke `LecturerRoster`.
 - Frontend membatasi daftar aset dosen pada aset yang ditautkan dan memakai daftar peminjaman dari API yang sudah difilter.
+- Dashboard dosen memfilter daftar perbaikan/kebersihan berdasarkan field kepemilikan; dashboard admin mempertahankan rekap sistem.
 - Proses penyimpanan frontend menunggu sinkronisasi selesai dan menampilkan status gagal bila backend menolak.
 
 ### Tahap A — Perbarui Apps Script
