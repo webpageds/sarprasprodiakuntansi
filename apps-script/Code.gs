@@ -118,12 +118,28 @@ function syncRecords_(user,module,records) {
   lock.waitLock(10000);
   try {
     const values = sh.getDataRange().getValues();
-    for (let i=values.length-1;i>=1;i--) if (String(values[i][0])===String(module)) sh.deleteRow(i+1);
     const now = new Date().toISOString();
-    const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
-    if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
-    log_(user,'Sinkronisasi',name,'',rows.length+' data disinkronkan');
-    return {ok:true,count:rows.length};
+    // Admin/Pimpinan may replace the full module snapshot. Other roles may only upsert,
+    // so a lecturer or facilities user cannot erase records created by other users.
+    if (['admin','pimpinan'].includes(String(user.role))) {
+      for (let i=values.length-1;i>=1;i--) if (String(values[i][0])===String(module)) sh.deleteRow(i+1);
+      const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
+      if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
+      log_(user,'Sinkronisasi',name,'',rows.length+' data disinkronkan');
+      return {ok:true,count:rows.length,mode:'replace'};
+    }
+    const current = sh.getDataRange().getValues();
+    const index = new Map();
+    current.forEach((row,i)=>{ if(i>0 && String(row[0])===String(module)) index.set(String(row[1]),i+1); });
+    records.forEach(record=>{
+      const id=String(record.id || Utilities.getUuid());
+      const row=[String(module),id,JSON.stringify(record),now,user.userId];
+      const rowNo=index.get(id);
+      if(rowNo) sh.getRange(rowNo,1,1,5).setValues([row]);
+      else sh.appendRow(row);
+    });
+    log_(user,'Sinkronisasi',name,'',records.length+' data diperbarui');
+    return {ok:true,count:records.length,mode:'upsert'};
   } finally { lock.releaseLock(); }
 }
 
