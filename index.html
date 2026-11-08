@@ -328,7 +328,7 @@ function save(){document.getElementById('storageState').textContent='Menyimpan k
 
 function log(message,ref=''){S.log.unshift({t:new Date().toLocaleString('id-ID'),r:ROLES[role],m:message,a:ref});}
 function toast(msg){let n=document.createElement('div');n.className='toast';n.textContent=msg;document.body.append(n);setTimeout(()=>n.remove(),2400)}
-async function persist(){
+async async function persist(){
  save(); render();
  try{
   const session=JSON.parse(sessionStorage.getItem('simspaSession')||'{}');
