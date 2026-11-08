@@ -82,6 +82,20 @@ function bootstrap_() {
   return {ok:true,spreadsheetId:ss.getId(),sheets:Object.keys(CONFIG.SHEETS)};
 }
 
+function createInitialAdminFromScriptProperties() {
+  const props = PropertiesService.getScriptProperties();
+  const name = props.getProperty('SIMSPA_ADMIN_NAME') || '';
+  const email = props.getProperty('SIMSPA_ADMIN_EMAIL') || '';
+  const password = props.getProperty('SIMSPA_ADMIN_PASSWORD') || '';
+  if (!name || !email || password.length < 12) {
+    throw new Error('Isi Script Properties: SIMSPA_ADMIN_NAME, SIMSPA_ADMIN_EMAIL, SIMSPA_ADMIN_PASSWORD (minimal 12 karakter).');
+  }
+  const result = setupAdmin_({name,email,password});
+  props.deleteProperty('SIMSPA_ADMIN_PASSWORD');
+  console.log('Admin awal dibuat untuk '+email+'. Password setup telah dihapus dari Script Properties.');
+  return result;
+}
+
 function setupAdmin_(body) {
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
