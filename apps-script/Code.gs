@@ -123,10 +123,10 @@ function importLecturersFromRosterSheet() {
   const issued = [];
   roster.forEach(person => {
     const name = String(person.name || '').trim();
-    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const nuptk = String(person.nuptk || '').replace(/\D/g,'');
     const requestedRole = String(person.role || 'dosen').trim().toLowerCase();
     const role = requestedRole === 'pimpinan' ? 'pimpinan' : 'dosen';
-    if (!name || !/^\\d{16}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid: '+name);
+    if (!name || !/^\d{16}$/.test(nuptk)) throw new Error('Nama/NUPTK tidak valid: '+name);
     if (existing.some(row => String(row.nuptk || '') === nuptk)) return;
     const salt = Utilities.getUuid().replace(/-/g,'');
     const temporaryPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
