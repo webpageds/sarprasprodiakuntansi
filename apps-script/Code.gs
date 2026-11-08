@@ -553,3 +553,31 @@ function hashPassword_(password,salt) {
 }
 function constantTimeEquals_(a,b) { a=String(a);b=String(b);if(a.length!==b.length)return false;let x=0;for(let i=0;i<a.length;i++)x|=a.charCodeAt(i)^b.charCodeAt(i);return x===0; }
 function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+
+// ===== SIM-SPA roster bridge helpers =====
+// Copy the lecturer rows from the official staff roster into LecturerRoster.
+// Keep NUPTK as plain text in Sheets to preserve all 16 digits.
+function importRosterFromStaffSpreadsheet() {
+  const source = SpreadsheetApp.openById('1Iw8dFUmF8S65vv8jaqeKcu26cvfh_bq23dk-aJ2Pj-c');
+  const target = sheet_('LecturerRoster');
+  const sourceSheet = source.getSheets().find(sh => sh.getSheetId() === 390669889);
+  if (!sourceSheet) throw new Error('Tab sumber dosen dengan gid 390669889 tidak ditemukan.');
+  const values = sourceSheet.getDataRange().getDisplayValues();
+  if (values.length < 2) throw new Error('Sheet sumber belum berisi data dosen.');
+  const normalize = v => String(v||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const header = values[0].map(normalize);
+  const nameIndex = header.findIndex(x=>['nama','namadosen','name'].includes(x));
+  const nuptkIndex = header.findIndex(x=>['nuptk','nuptkno','nomornuptk'].includes(x));
+  if (nameIndex < 0 || nuptkIndex < 0) throw new Error('Header sheet sumber harus memuat kolom Nama dan NUPTK. Periksa baris pertama.');
+  const rows = values.slice(1).filter(row=>String(row[nameIndex]||'').trim() && String(row[nuptkIndex]||'').trim())
+    .map(row=>[String(row[nameIndex]).trim(),String(row[nuptkIndex]).replace(/\D/g,''),'dosen','']);
+  if (!rows.length) throw new Error('Tidak ada baris nama dan NUPTK yang valid untuk diimpor.');
+  const lock=LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    target.clearContents();
+    target.getRange(1,1,1,4).setValues([CONFIG.SHEETS.LecturerRoster]);
+    target.getRange(2,1,rows.length,4).setNumberFormat('@');
+    target.getRange(2,1,rows.length,4).setValues(rows);
+    return {ok:true,imported:rows.length,sourceSheet:sourceSheet.getName(),message:'Roster dosen disalin ke LecturerRoster. Tinjau hasilnya sebelum menjalankan pembuatan akun.'};
+  } finally { lock.releaseLock(); }
+}
