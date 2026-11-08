@@ -328,7 +328,24 @@ function save(){document.getElementById('storageState').textContent='Menyimpan k
 
 function log(message,ref=''){S.log.unshift({t:new Date().toLocaleString('id-ID'),r:ROLES[role],m:message,a:ref});}
 function toast(msg){let n=document.createElement('div');n.className='toast';n.textContent=msg;document.body.append(n);setTimeout(()=>n.remove(),2400)}
-function persist(){save();render();syncRemoteState().catch(err=>{document.getElementById('storageState').textContent='Gagal sinkronisasi';toast('Gagal menyimpan ke database: '+err.message);});}
+async function persist(){
+ save(); render();
+ try{
+  const session=JSON.parse(sessionStorage.getItem('simspaSession')||'{}');
+  const token=session.token;
+  if(!token) throw new Error('Sesi login tidak tersedia.');
+  const modules=role==='admin'||role==='pimpinan'
+   ? ['rooms','assets','stock','tx','loans','repairs','mutasi','hapus','clean','log','proc']
+   : role==='dosen' ? ['loans','repairs','clean'] : ['repairs','clean'];
+  for(const module of modules){
+   await apiCall({action:'sync',module,records:S[module]||[]},token);
+  }
+  document.getElementById('storageState').textContent='Tersinkron ke Google Sheets';
+ }catch(err){
+  document.getElementById('storageState').textContent='Gagal sinkronisasi';
+  toast('Gagal menyimpan ke database: '+err.message);
+ }
+}
 function statusBadge(s){let c=/Baik|Selesai|Dikembalikan|Disetujui|Aktif|Sudah dibersihkan|Bersih|Aman/.test(s)?'good':/Rusak Berat|Tidak Dapat|Terlambat|Ditolak|Menipis|Dihapus|Terbuka/.test(s)?'bad':/Rusak|Diajukan|Diproses|Belum/.test(s)?'warn':'info';return `<span class="badge ${c}">${esc(s)}</span>`}
 function table(headers,rows){return `<div class="tablewrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(v=>`<td>${v??''}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty">Belum ada data untuk ditampilkan.</td></tr>`}</tbody></table></div>`}
 function action(label,key,kind=''){return `<button class="btn sm ${kind}" data-action="${esc(key)}">${label}</button>`}
