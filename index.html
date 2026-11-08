@@ -515,6 +515,16 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
    if(result.user.role!==selectedLoginRole) throw new Error('Akun ini tidak memiliki akses sebagai '+({admin:'Admin Prodi',pimpinan:'Pimpinan Prodi',dosen:'Dosen',petugas:'Petugas Kebersihan'}[selectedLoginRole])+'. Pilih kategori yang sesuai.');
    currentUser=result.user;role=result.user.role;
    sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
+   if(result.user.mustChangePassword){
+    const first=window.prompt('Ini password sementara. Buat password baru minimal 12 karakter:');
+    if(!first || first.length<12) throw new Error('Password baru minimal 12 karakter. Silakan login kembali untuk mengulang proses.');
+    const second=window.prompt('Ulangi password baru:');
+    if(first!==second) throw new Error('Konfirmasi password tidak sama. Silakan login kembali.');
+    await apiCall({action:'changePassword',newPassword:first},result.token);
+    result.user.mustChangePassword=false;
+    currentUser=result.user;
+    sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
+   }
    btn.textContent='Memuat data...';
    await loadRemoteState(result.token);
    view='dash';query='';document.getElementById('loginScreen').hidden=true;document.getElementById('appShell').hidden=false;
