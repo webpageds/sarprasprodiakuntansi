@@ -299,7 +299,11 @@ async function apiCall(payload,token){
  });
 }
 async function loadRemoteState(token){
- const modules=['rooms','assets','stock','tx','loans','repairs','mutasi','hapus','clean','log'];
+ const modules=currentUser.role==='admin'||currentUser.role==='pimpinan'
+  ? ['rooms','assets','stock','tx','loans','repairs','mutasi','hapus','clean','log']
+  : currentUser.role==='dosen'
+   ? ['rooms','assets','loans','repairs','clean']
+   : ['rooms','repairs','clean'];
  const next=emptyState();
  for(const module of modules){
   const result=await apiCall({action:'list',module},token);
