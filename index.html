@@ -49,6 +49,31 @@
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.content{padding:25px 22px}}
 @media(max-width:760px){.sidebar{transform:translateX(-100%);transition:.22s;width:270px;box-shadow:20px 0 40px #102b4630}.sidebar.open{transform:translateX(0)}.mainwrap{margin-left:0}.topbar{height:64px;padding:0 16px}.mobile-toggle{display:block}.content{padding:22px 15px 90px}.pagehead{align-items:flex-start;flex-direction:column}.pagehead h1{font-size:22px}.top-actions{gap:7px}.rolebox{max-width:142px}.columns,.columns.equal{grid-template-columns:1fr}.kpis{gap:9px}.kpi{padding:13px}.kpi strong{font-size:23px}.kpi-top{font-size:10px}.kpi-icon{width:27px;height:27px}.panel{padding:14px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.mobile-nav{display:block;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:9px 6px calc(9px + env(safe-area-inset-bottom));z-index:6}.mobile-nav .nav{display:flex;justify-content:space-around}.mobile-nav button{display:grid;justify-items:center;gap:2px;color:var(--muted);font-size:9px;padding:4px 8px}.mobile-nav button.active{background:var(--teal-soft);color:var(--teal)}.mobile-nav .ico{font-size:17px}.sidefoot{margin-top:20px}}
 @media(max-width:390px){.kpis{grid-template-columns:1fr 1fr}.kpi strong{font-size:21px}.rolebox{font-size:10px}}
+
+/* Navigation refinement */
+.sidebar{width:268px;padding:25px 17px}
+.mainwrap{margin-left:268px}
+.brand{padding:3px 10px 24px}
+.navlabel{padding:23px 12px 10px;letter-spacing:1.6px}
+.nav{gap:6px}
+.nav button{padding:12px 13px;border-radius:12px;font-size:12px;letter-spacing:.05px;position:relative}
+.nav button.active{background:linear-gradient(90deg,#ffffff25,#ffffff0c);box-shadow:inset 3px 0 #6ee7d5,0 6px 16px #041a2b20}
+.nav button .ico{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:#ffffff0b;font-size:15px}
+.nav button.active .ico{background:#ffffff20}
+.navgroup{margin:0 0 12px}
+.navgroup-title{font-size:9px;letter-spacing:1.5px;color:#82a5b9;font-weight:800;padding:16px 12px 7px}
+.nav button .navdesc{display:none}
+.sidefoot{border-radius:12px;background:#ffffff0b;padding:13px 12px;margin-top:auto}
+.topbar{padding:0 36px}
+.top-actions{gap:10px}
+.rolebox{background:#edf6f5;border-color:#d9eae7;color:#0e645e;font-weight:700}
+.content{max-width:1500px}
+.pagehead{margin-bottom:25px}
+.pagehead h1{letter-spacing:-.7px}
+.panel{border-radius:17px}
+.btn{transition:all .18s ease}
+.btn.primary{box-shadow:0 5px 12px #0d948822}
+@media(max-width:760px){.sidebar{width:280px}.mainwrap{margin-left:0}.topbar{padding:0 16px}}
 </style></head>
 <body>
 <div id="loginScreen">
@@ -87,7 +112,18 @@ const KEY='simspa-prodi-v2';
 const CONDITIONS=['Baik','Rusak Ringan','Rusak Sedang','Rusak Berat','Tidak Dapat Digunakan'];
 const CATEGORIES=['TI','Perabot','Laboratorium','Kantor','Penunjang'];
 const ROLES={admin:'Admin Prodi',dosen:'Dosen / Pengguna',pimpinan:'Pimpinan Prodi',petugas:'Petugas Kebersihan'};
-const NAV=[['dash','▦','Dashboard','admin pimpinan dosen petugas'],['aset','▣','Aset Tetap','admin dosen pimpinan'],['stok','▤','Persediaan','admin pimpinan'],['pinjam','⇄','Peminjaman','admin dosen pimpinan'],['rusak','⚒','Perbaikan','admin dosen pimpinan petugas'],['mutasi','⇢','Mutasi & Penghapusan','admin pimpinan'],['bersih','✳','Kebersihan','admin dosen pimpinan petugas'],['ruang','⌂','Ruangan','admin pimpinan'],['lap','▧','Laporan','admin pimpinan'],['log','☷','Log Aktivitas','admin']];
+const NAV=[
+ ['dash','▦','Dashboard','admin pimpinan dosen petugas','Ringkasan informasi sarana prasarana'],
+ ['aset','▣','Aset Tetap','admin pimpinan dosen','Inventaris dan kondisi aset'],
+ ['stok','▤','Persediaan','admin pimpinan','Stok barang dan transaksi'],
+ ['pinjam','⇄','Peminjaman','admin pimpinan dosen','Pengajuan dan persetujuan peminjaman'],
+ ['rusak','⚒','Perbaikan','admin pimpinan dosen petugas','Pelaporan dan tindak lanjut kerusakan'],
+ ['mutasi','⇢','Mutasi & Penghapusan','admin pimpinan','Perubahan lokasi dan penghapusan aset'],
+ ['bersih','✳','Kebersihan','admin pimpinan dosen petugas','Checklist dan keluhan ruangan'],
+ ['ruang','⌂','Ruangan','admin pimpinan','Data ruang dan fasilitas'],
+ ['lap','▧','Laporan','admin pimpinan','Rekapitulasi dan ekspor data'],
+ ['log','☷','Log Aktivitas','admin pimpinan','Riwayat aktivitas sistem']
+];
 let S,role='admin',view='dash',query='',report='Inventaris',chosenRole=null;
 const today=()=>new Date().toISOString().slice(0,10),year=new Date().getFullYear(),id=()=>Math.random().toString(36).slice(2,9);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -125,7 +161,7 @@ const reports={
 function bookValue(a){return Math.max(0,a.nilai-a.nilai/a.umur*Math.min(a.umur,year-a.thn))}
 const V={
 dash(){let A=activeAssets(),good=A.filter(a=>a.kondisi==='Baik').length,bad=A.filter(a=>/Berat|Tidak/.test(a.kondisi)).length,low=S.stock.filter(s=>s.stok<=s.min).length,open=S.repairs.filter(p=>!['Selesai','Tidak dapat diperbaiki'].includes(p.status));let pending=S.loans.filter(l=>l.status==='Diajukan').length+S.mutasi.filter(m=>m.status==='Diusulkan').length+S.hapus.filter(m=>m.status==='Diusulkan').length;
-return pageHead('Dashboard','Pantau kondisi aset, aktivitas peminjaman, dan kebutuhan fasilitas prodi.')+`<div class="notice">Selamat datang di SIM-SPA Prodi Akuntansi. Gunakan menu untuk mengelola inventaris dan layanan sarana prasarana secara terstruktur.</div><div class="kpis">${kpi('Total aset tetap',A.length,'▣')}${kpi('Kondisi baik',good,'✓','#e6f6ef','#16845b')}${kpi('Perlu perhatian',bad,'⚠','#fff1e9','#d97706')}${kpi('Sedang dipinjam',A.filter(a=>a.status==='Dipinjam').length,'⇄','#eaf3fb','#397ca8')}${kpi('Dalam perbaikan',A.filter(a=>a.status==='Diperbaiki').length,'⚒','#fff4df','#a45d05')}${kpi('Total ruangan',S.rooms.length,'⌂')}${kpi('Stok menipis',low,'▤','#fff1e9','#d97706')}${kpi('Menunggu persetujuan',pending,'◷','#f0edff','#7660b5')}</div><div class="columns"><section class="panel"><div class="panelhead"><h3>Komposisi kondisi aset</h3><small>${A.length} aset terdata</small></div>${CONDITIONS.map((c,i)=>{let n=A.filter(a=>a.kondisi===c).length;return `<div class="chartrow"><span>${c}</span><div class="track"><div class="fill" style="width:${A.length?n/A.length*100:0}%;opacity:${1-i*.12}"></div></div><b>${n}</b></div>`}).join('')}</section><section class="panel"><div class="panelhead"><h3>Ringkasan tindak lanjut</h3><small>Perlu dipantau</small></div>${[['Laporan kerusakan terbuka',open.length,'⚒'],['Peminjaman terlambat',S.loans.filter(late).length,'◷'],['Stok mencapai batas minimum',low,'▤'],['Ruang belum checklist hari ini',S.rooms.filter(r=>conditionRoom(r)!=='Sudah dibersihkan').length,'⌂']].map(x=>`<div class="shortcut"><div class="shortico">${x[2]}</div><div><b>${x[0]}</b><small>Periksa dan lakukan tindak lanjut</small></div><strong style="margin-left:auto">${x[1]}</strong></div>`).join('')}</section></div><div class="columns equal"><section class="panel"><div class="panelhead"><h3>Kerusakan yang belum selesai</h3>${action('Lihat semua','nav|rusak')}</div>${table(['Barang','Uraian','Status'],open.slice(0,5).map(p=>[assetCell(asset(p.asset)),esc(p.rusak),statusBadge(p.status)]))}</section><section class="panel"><div class="panelhead"><h3>Status ruangan</h3>${action('Kelola ruangan','nav|bersih')}</div>${table(['Ruangan','Status'],S.rooms.slice(0,6).map(r=>[esc(r.nama),statusBadge(conditionRoom(r))]))}</section></div>`},
+return pageHead('Dashboard',role==='dosen'?'Akses informasi aset, layanan peminjaman, serta pelaporan fasilitas.':role==='petugas'?'Pantau tugas kebersihan dan laporan kerusakan fasilitas.':'Pantau kondisi aset, aktivitas peminjaman, dan kebutuhan fasilitas prodi.')+`<div class="notice">Selamat datang, <b>${esc(ROLES[role])}</b>. ${role==='dosen'?'Gunakan menu layanan untuk mengajukan peminjaman dan melaporkan kendala fasilitas.':role==='petugas'?'Gunakan menu untuk mencatat checklist kebersihan dan tindak lanjut laporan.':'Gunakan menu sesuai kewenangan untuk memantau dan mengelola sarana prasarana prodi.'}</div><div class="kpis">${kpi('Total aset tetap',A.length,'▣')}${kpi('Kondisi baik',good,'✓','#e6f6ef','#16845b')}${kpi('Perlu perhatian',bad,'⚠','#fff1e9','#d97706')}${kpi('Sedang dipinjam',A.filter(a=>a.status==='Dipinjam').length,'⇄','#eaf3fb','#397ca8')}${kpi('Dalam perbaikan',A.filter(a=>a.status==='Diperbaiki').length,'⚒','#fff4df','#a45d05')}${kpi('Total ruangan',S.rooms.length,'⌂')}${kpi('Stok menipis',low,'▤','#fff1e9','#d97706')}${kpi('Menunggu persetujuan',pending,'◷','#f0edff','#7660b5')}</div><div class="columns"><section class="panel"><div class="panelhead"><h3>Komposisi kondisi aset</h3><small>${A.length} aset terdata</small></div>${CONDITIONS.map((c,i)=>{let n=A.filter(a=>a.kondisi===c).length;return `<div class="chartrow"><span>${c}</span><div class="track"><div class="fill" style="width:${A.length?n/A.length*100:0}%;opacity:${1-i*.12}"></div></div><b>${n}</b></div>`}).join('')}</section><section class="panel"><div class="panelhead"><h3>Ringkasan tindak lanjut</h3><small>Perlu dipantau</small></div>${[['Laporan kerusakan terbuka',open.length,'⚒'],['Peminjaman terlambat',S.loans.filter(late).length,'◷'],['Stok mencapai batas minimum',low,'▤'],['Ruang belum checklist hari ini',S.rooms.filter(r=>conditionRoom(r)!=='Sudah dibersihkan').length,'⌂']].map(x=>`<div class="shortcut"><div class="shortico">${x[2]}</div><div><b>${x[0]}</b><small>Periksa dan lakukan tindak lanjut</small></div><strong style="margin-left:auto">${x[1]}</strong></div>`).join('')}</section></div><div class="columns equal"><section class="panel"><div class="panelhead"><h3>Kerusakan yang belum selesai</h3>${action('Lihat semua','nav|rusak')}</div>${table(['Barang','Uraian','Status'],open.slice(0,5).map(p=>[assetCell(asset(p.asset)),esc(p.rusak),statusBadge(p.status)]))}</section><section class="panel"><div class="panelhead"><h3>Status ruangan</h3>${action('Kelola ruangan','nav|bersih')}</div>${table(['Ruangan','Status'],S.rooms.slice(0,6).map(r=>[esc(r.nama),statusBadge(conditionRoom(r))]))}</section></div>`},
  aset(){let rows=S.assets.map(a=>({a,html:[`<span class="celltitle">${esc(a.kode)}</span>`,assetCell(a),esc(a.kat),esc(roomName(a.ruang)),statusBadge(a.kondisi),statusBadge(a.status),esc(a.pj),`${action('Detail','detail|'+a.id)} ${allowed('admin')?action('Kondisi','condition|'+a.id):''} ${allowed('admin')?action('Pindah','move|'+a.id):''} ${allowed('admin')?action('Usul hapus','delete-propose|'+a.id,'danger'):''} ${allowed('admin','dosen')?action('Pinjam','loan|'+a.id,'primary'):''} ${action('Lapor','repair-report|'+a.id)}`]})).filter(x=>!query||JSON.stringify(x.a).toLowerCase().includes(query.toLowerCase()));return pageHead('Aset Tetap','Daftar inventaris, lokasi, nilai perolehan, dan kondisi barang.',allowed('admin')?'<button class="btn primary" data-action="asset-add">＋ Tambah aset</button>':'')+`<section class="panel"><div class="toolbar"><div class="search"><input id="search" placeholder="Cari nama, kode, lokasi, kondisi..." value="${esc(query)}"></div><span class="badge info">${rows.length} data</span></div>${table(['Kode aset','Nama barang','Kategori','Lokasi','Kondisi','Status','Penanggung jawab','Aksi'],rows.map(x=>x.html))}</section>`},
  stok(){return pageHead('Persediaan','Kelola barang habis pakai, stok minimum, dan transaksi keluar-masuk.',allowed('admin')?'<button class="btn primary" data-action="stock-add">＋ Tambah barang</button>':'')+`<section class="panel"><div class="panelhead"><h3>Daftar persediaan</h3><small>${S.stock.length} jenis barang</small></div>${table(['Nama barang','Kategori','Stok tersedia','Batas minimum','Lokasi','Status','Aksi'],S.stock.map(s=>[ `<b>${esc(s.nama)}</b><span class="sub">${esc(s.satuan)}</span>`,esc(s.kat),`<b>${s.stok}</b> ${esc(s.satuan)}`,s.min,esc(s.lok),statusBadge(s.stok<=s.min?'Menipis':'Aman'),allowed('admin')?action('Catat transaksi','stock-io|'+s.id):'—']))}</section>`},
  pinjam(){return pageHead('Peminjaman Barang','Ajukan, setujui, serahkan, dan pantau pengembalian aset.',allowed('admin','dosen')?'<button class="btn primary" data-action="loan">＋ Ajukan peminjaman</button>':'')+`<section class="panel">${table(['Peminjam','Barang','Tanggal pinjam','Rencana kembali','Keperluan','Status','Aksi'],S.loans.map(l=>[esc(l.peminjam),assetCell(asset(l.asset)),l.tgl,l.kembali,esc(l.perlu),statusBadge(late(l)?'Terlambat':l.status)+(l.kondisiK?`<span class="sub">Kembali: ${esc(l.kondisiK)}</span>`:''),`${l.status==='Diajukan'&&allowed('admin','pimpinan')?action('Setujui','loan-state|ok|'+l.id,'primary')+' '+action('Tolak','loan-state|no|'+l.id,'danger'):''}${l.status==='Disetujui'&&allowed('admin')?action('Serahkan','loan-state|out|'+l.id):''}${l.status==='Dipinjam'&&allowed('admin')?action('Terima kembali','loan-state|in|'+l.id,'primary'):''}`]))}</section>`},
@@ -163,7 +199,23 @@ case'clean-fix':S.clean.forEach(c=>{if(c.room===p&&c.tipe==='keluhan')c.selesai=
 case'export':return exportCSV();
 }}
 function exportCSV(){let [h,get]=reports[report],rows=get().filter(r=>!query||r.join(' ').toLowerCase().includes(query.toLowerCase()));let csv=[h,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');let blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='laporan-sim-spa-'+report.toLowerCase().replaceAll(' ','-')+'-'+today()+'.csv';a.click();URL.revokeObjectURL(url);toast('Laporan CSV berhasil diunduh')}
-function render(){let visible=NAV.filter(n=>n[3].split(' ').includes(role));if(!visible.some(n=>n[0]===view))view='dash';let nav=visible.map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2]}</span></button>`).join('');document.getElementById('sideNav').innerHTML=nav;document.getElementById('mobileNav').innerHTML=visible.slice(0,5).map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2].split(' ')[0]}</span></button>`).join('');document.getElementById('content').innerHTML=V[view]();document.getElementById('crumb').textContent=(NAV.find(n=>n[0]===view)||[])[2]||'Dashboard';document.getElementById('avatar').textContent=ROLES[role][0];document.getElementById('activeRoleLabel').textContent=ROLES[role];}
+function render(){
+ let visible=NAV.filter(n=>n[3].split(' ').includes(role));
+ if(!visible.some(n=>n[0]===view))view='dash';
+ const groups=role==='dosen'?
+  [{title:'MENU LAYANAN',items:visible}]:
+  role==='petugas'?
+  [{title:'MENU PETUGAS',items:visible}]:
+  [{title:'MENU UTAMA',items:visible.filter(n=>['dash','aset','stok','pinjam','rusak','mutasi','bersih','ruang'].includes(n[0]))},
+   {title:'ADMINISTRASI & PELAPORAN',items:visible.filter(n=>['lap','log'].includes(n[0]))}];
+ let nav=groups.map(g=>g.items.length?`<div class="navgroup"><div class="navgroup-title">${g.title}</div>${g.items.map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}" title="${n[4]}"><span class="ico">${n[1]}</span><span>${n[2]}</span></button>`).join('')}</div>`:'').join('');
+ document.getElementById('sideNav').innerHTML=nav;
+ document.getElementById('mobileNav').innerHTML=visible.slice(0,5).map(n=>`<button class="${view===n[0]?'active':''}" data-action="nav|${n[0]}"><span class="ico">${n[1]}</span><span>${n[2].split(' ')[0]}</span></button>`).join('');
+ document.getElementById('content').innerHTML=V[view]();
+ document.getElementById('crumb').textContent=(NAV.find(n=>n[0]===view)||[])[2]||'Dashboard';
+ document.getElementById('avatar').textContent=ROLES[role][0];
+ document.getElementById('activeRoleLabel').textContent=ROLES[role];
+}
 document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if(b)act(b.dataset.action)});
 document.addEventListener('input',e=>{if(e.target.id==='search'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById('search');if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
 document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
