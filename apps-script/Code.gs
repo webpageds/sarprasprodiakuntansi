@@ -4,7 +4,7 @@
  * This starter uses Google Sheets as a shared data store.
  */
 const CONFIG = {
-  SPREADSHEET_ID: 'PASTE_SPREADSHEET_ID_HERE',
+  SPREADSHEET_ID: '1Iw8dFUmF8S65vv8jaqeKcu26cvfh_bq23dk-aJ2Pj-c',
   APP_NAME: 'SIM-SPA Prodi Akuntansi',
   TOKEN_TTL_SECONDS: 21600,
   SHEETS: {
