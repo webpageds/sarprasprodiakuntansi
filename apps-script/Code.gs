@@ -175,6 +175,35 @@ function importLecturersFromRosterSheet() {
   return {ok:true,created:issued.length,notice:'Password sementara hanya tersedia pada Execution log. Bagikan secara pribadi.'};
 }
 
+function reissueTemporaryPasswordsForRoster() {
+  migrateUsersSchema();
+  const roster = records_('LecturerRoster');
+  const users = records_('Users');
+  const issued = [];
+  roster.forEach((person,index) => {
+    const role = normalizeRosterRole_(person.role);
+    const nuptk = String(person.nuptk || '').replace(/\\D/g,'');
+    const email = String(person.email || '').trim().toLowerCase();
+    const identifier = role === 'petugas' ? email : nuptk;
+    const row = users.find(u => role === 'petugas'
+      ? String(u.email || '').toLowerCase() === email
+      : String(u.nuptk || '').replace(/\\D/g,'') === nuptk);
+    if (!row) return;
+    const salt = Utilities.getUuid().replace(/-/g,'');
+    const temporaryPassword = Utilities.getUuid().replace(/-/g,'').slice(0,16);
+    const sh = sheet_('Users'), values = sh.getDataRange().getValues(), headers = values[0].map(String);
+    const rowIndex = values.findIndex((r,i)=>i>0 && String(r[headers.indexOf('userId')])===String(row.userId));
+    if (rowIndex < 1) return;
+    sh.getRange(rowIndex+1,headers.indexOf('passwordHash')+1).setValue(hashPassword_(temporaryPassword,salt));
+    sh.getRange(rowIndex+1,headers.indexOf('salt')+1).setValue(salt);
+    if (headers.includes('mustChangePassword')) sh.getRange(rowIndex+1,headers.indexOf('mustChangePassword')+1).setValue(true);
+    if (headers.includes('updatedAt')) sh.getRange(rowIndex+1,headers.indexOf('updatedAt')+1).setValue(new Date().toISOString());
+    issued.push({name:row.name,loginId:identifier,role,temporaryPassword});
+  });
+  console.log('TEMPORARY PASSWORDS — bagikan secara pribadi dan jangan teruskan log ini: '+JSON.stringify(issued));
+  return {ok:true,reissued:issued.length,notice:'Password sementara baru diterbitkan untuk akun yang cocok dengan roster.'};
+}
+
 function login_(body) {
   const identifier = String(body.identifier || body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
