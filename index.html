@@ -211,16 +211,31 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbwZ6Pe9sCAIKTg6
    <div class="login-copy">© 2026 SIM-SPA Prodi Akuntansi · Sistem Informasi Sarana & Prasarana</div>
   </section>
   <section class="login-select">
-   <div class="eyebrow">SELAMAT DATANG</div>
-   <h2>Masuk ke SIM-SPA</h2>
-   <p>Gunakan akun yang telah didaftarkan oleh Administrator.</p>
-   <form id="loginForm" autocomplete="on">
-    <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" name="username" type="email" autocomplete="username" placeholder="nama@kampus.ac.id" required></div>
-    <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required></div>
-    <div id="loginError" role="alert" style="display:none;color:#b83838;background:#fff1f1;border:1px solid #f4d5d5;padding:10px;border-radius:9px;font-size:11px;margin-top:12px"></div>
-    <div class="login-action"><button id="loginSubmit" type="submit">Masuk</button></div>
-   </form>
-   <div class="login-hint">Role ditentukan oleh akun administrator, bukan dipilih sendiri.</div>
+   <div id="roleChooser">
+    <div class="eyebrow">SELAMAT DATANG</div>
+    <h2>Pilih akses masuk</h2>
+    <p>Pilih kategori pengguna SIM-SPA untuk melanjutkan.</p>
+    <div class="role-grid">
+     <button class="role-card" type="button" data-login-role="admin"><span class="role-icon">⚙</span><b>Admin Prodi</b><small>Pengelolaan sistem dan data sarpras</small></button>
+     <button class="role-card" type="button" data-login-role="pimpinan"><span class="role-icon">▥</span><b>Pimpinan Prodi</b><small>Monitoring dan persetujuan</small></button>
+     <button class="role-card" type="button" data-login-role="dosen"><span class="role-icon">▤</span><b>Dosen</b><small>Login menggunakan NUPTK</small></button>
+     <button class="role-card" type="button" data-login-role="petugas"><span class="role-icon">✳</span><b>Petugas Kebersihan</b><small>Checklist kebersihan dan laporan</small></button>
+    </div>
+    <div class="login-hint">Akses menu ditentukan oleh role akun yang terdaftar.</div>
+   </div>
+   <div id="credentialPanel" hidden>
+    <div class="eyebrow" id="credentialEyebrow">LOGIN PENGGUNA</div>
+    <h2 id="credentialTitle">Masuk ke SIM-SPA</h2>
+    <p id="credentialDescription">Gunakan akun yang telah didaftarkan administrator.</p>
+    <form id="loginForm" autocomplete="on">
+     <div class="field"><label id="identifierLabel" for="loginIdentifier">Email</label><input id="loginIdentifier" name="username" type="text" autocomplete="username" placeholder="nama@kampus.ac.id" required></div>
+     <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required></div>
+     <div id="loginError" role="alert" style="display:none;color:#b83838;background:#fff1f1;border:1px solid #f4d5d5;padding:10px;border-radius:9px;font-size:11px;margin-top:12px"></div>
+     <div class="login-action"><button id="loginSubmit" type="submit">Masuk</button></div>
+    </form>
+    <button class="btn" type="button" id="backToRoles" style="width:100%;margin-top:10px">Kembali pilih akses</button>
+    <div class="login-hint" id="loginHint">Gunakan akun terdaftar.</div>
+   </div>
   </section>
  </div>
 </div>
@@ -444,11 +459,40 @@ document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if
 document.addEventListener('input',e=>{if(e.target.id==='search'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById('search');if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
 document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
 document.getElementById('toggle').onclick=()=>document.getElementById('sidebar').classList.toggle('open');document.getElementById('modalback').addEventListener('click',e=>{if(e.target.id==='modalback')closeModal()});
+let selectedLoginRole = '';
+function openCredentialPanel(roleName){
+ selectedLoginRole=roleName;
+ const labels={admin:'Admin Prodi',pimpinan:'Pimpinan Prodi',dosen:'Dosen',petugas:'Petugas Kebersihan'};
+ const isLecturer=roleName==='dosen';
+ document.getElementById('roleChooser').hidden=true;
+ document.getElementById('credentialPanel').hidden=false;
+ document.getElementById('credentialTitle').textContent='Login '+labels[roleName];
+ document.getElementById('credentialEyebrow').textContent=labels[roleName].toUpperCase();
+ document.getElementById('credentialDescription').textContent=isLecturer?'Masukkan NUPTK dan password pribadi yang sudah didaftarkan.':'Masukkan email dan password akun '+labels[roleName]+'.';
+ document.getElementById('identifierLabel').textContent=isLecturer?'NUPTK':'Email';
+ const input=document.getElementById('loginIdentifier');
+ input.type=isLecturer?'text':'email';
+ input.inputMode=isLecturer?'numeric':'email';
+ input.placeholder=isLecturer?'Masukkan NUPTK':'nama@kampus.ac.id';
+ input.value='';
+ document.getElementById('loginPassword').value='';
+ document.getElementById('loginHint').textContent=isLecturer?'NUPTK digunakan sebagai nama pengguna, bukan sebagai password.':'Role akun harus sesuai dengan pilihan akses.';
+}
+document.querySelectorAll('[data-login-role]').forEach(button=>button.addEventListener('click',()=>openCredentialPanel(button.dataset.loginRole)));
+document.getElementById('backToRoles').addEventListener('click',()=>{
+ document.getElementById('credentialPanel').hidden=true;
+ document.getElementById('roleChooser').hidden=false;
+ document.getElementById('loginError').style.display='none';
+ selectedLoginRole='';
+});
 function showLogin(message=''){
  document.getElementById('appShell').hidden=true;
  document.getElementById('loginScreen').hidden=false;
  currentUser=null;
  role='dosen';
+ selectedLoginRole='';
+ document.getElementById('credentialPanel').hidden=true;
+ document.getElementById('roleChooser').hidden=false;
  const err=document.getElementById('loginError');
  if(err){err.textContent=message;err.style.display=message?'block':'none'}
  const form=document.getElementById('loginForm'); if(form) form.reset();
@@ -456,15 +500,15 @@ function showLogin(message=''){
 function logout(){try{sessionStorage.removeItem('simspaSession')}catch(e){}showLogin('Anda telah keluar dari SIM-SPA.')}
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();
- const email=document.getElementById('loginEmail').value.trim();
+ const identifier=document.getElementById('loginIdentifier').value.trim();
  const password=document.getElementById('loginPassword').value;
  const btn=document.getElementById('loginSubmit'),err=document.getElementById('loginError');
  btn.disabled=true;btn.textContent='Memeriksa akun...';err.style.display='none';
  try{
-   if(!window.SIMSPA_API_URL) throw new Error('Backend belum dikonfigurasi. Administrator perlu memasang URL Web App Apps Script pada konfigurasi aplikasi.');
-   const result=await apiCall({action:'login',email,password});
-   if(!result.ok) throw new Error(result.error||'Login gagal. Periksa email dan password.');
-   if(!result.token||!result.user||!ROLES[result.user.role]) throw new Error('Respons akun tidak valid atau role belum dikenali.');
+   if(!selectedLoginRole) throw new Error('Pilih kategori akses terlebih dahulu.');
+   const result=await apiCall({action:'login',identifier,password});
+   if(!result.token||!result.user||!ROLES[result.user.role]) throw new Error('Respons akun tidak valid.');
+   if(result.user.role!==selectedLoginRole) throw new Error('Akun ini tidak memiliki akses sebagai '+({admin:'Admin Prodi',pimpinan:'Pimpinan Prodi',dosen:'Dosen',petugas:'Petugas Kebersihan'}[selectedLoginRole])+'. Pilih kategori yang sesuai.');
    currentUser=result.user;role=result.user.role;
    sessionStorage.setItem('simspaSession',JSON.stringify({token:result.token,user:result.user}));
    btn.textContent='Memuat data...';
@@ -475,6 +519,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  }catch(error){err.textContent=error.message||'Terjadi kesalahan saat login.';err.style.display='block'}
  finally{btn.disabled=false;btn.textContent='Masuk'}
 });
+
 showLogin();
 
 </script></body></html>
