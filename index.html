@@ -259,7 +259,10 @@ function emptyState(){return {rooms:[],assets:[],stock:[],tx:[],loans:[],repairs
 async function apiCall(payload,token){
  const body=Object.assign({},payload,token?{token}:{});
  const response=await fetch(window.SIMSPA_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
- const result=await response.json();
+ let raw=await response.text();
+ let result;
+ try { result=JSON.parse(raw); }
+ catch(parseError) { throw new Error('Respons Apps Script bukan JSON. Pastikan deployment Web App memakai Execute as: Me, akses sesuai, dan URL /exec versi terbaru. Cuplikan respons: '+raw.slice(0,160)); }
  if(!result.ok) throw new Error(result.error||'Permintaan ke backend gagal.');
  return result;
 }
@@ -442,8 +445,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  btn.disabled=true;btn.textContent='Memeriksa akun...';err.style.display='none';
  try{
    if(!window.SIMSPA_API_URL) throw new Error('Backend belum dikonfigurasi. Administrator perlu memasang URL Web App Apps Script pada konfigurasi aplikasi.');
-   const response=await fetch(window.SIMSPA_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',email,password})});
-   const result=await response.json();
+   const result=await apiCall({action:'login',email,password});
    if(!result.ok) throw new Error(result.error||'Login gagal. Periksa email dan password.');
    if(!result.token||!result.user||!ROLES[result.user.role]) throw new Error('Respons akun tidak valid atau role belum dikenali.');
    currentUser=result.user;role=result.user.role;
