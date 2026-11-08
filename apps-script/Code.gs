@@ -49,6 +49,7 @@ function doPost(e) {
     else if (action === 'adminListUsers') result = adminListUsers_(authenticate_(body.token));
     else if (action === 'adminResetPassword') result = adminResetPassword_(authenticate_(body.token),body);
     else if (action === 'adminAssignAssetOwner') result = adminAssignAssetOwner_(authenticate_(body.token),body);
+    else if (action === 'adminImportRoster') result = importRosterFromStaffSpreadsheetForAdmin_(body.token);
     else {
       const user = authenticate_(body.token);
       if (action === 'logout') {
@@ -580,4 +581,10 @@ function importRosterFromStaffSpreadsheet() {
     target.getRange(2,1,rows.length,4).setValues(rows);
     return {ok:true,imported:rows.length,sourceSheet:sourceSheet.getName(),message:'Roster dosen disalin ke LecturerRoster. Tinjau hasilnya sebelum menjalankan pembuatan akun.'};
   } finally { lock.releaseLock(); }
+}
+
+function importRosterFromStaffSpreadsheetForAdmin_(token) {
+  const admin=authenticate_(token);
+  if(String(admin.role)!=='admin') throw new Error('Hanya Admin Prodi yang dapat mengimpor roster.');
+  return importRosterFromStaffSpreadsheet();
 }
