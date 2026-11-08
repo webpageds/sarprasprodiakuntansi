@@ -352,6 +352,22 @@ function authenticate_(token) {
   return user;
 }
 
+function filterRecordsForUser_(user,module,records) {
+  const role=String(user.role||'');
+  const uid=String(user.userId||'');
+  if(['admin','pimpinan'].includes(role)) return records;
+  const ownerFields={
+    loans:['borrowerUserId','createdByUserId','borrowerId'],
+    repairs:['reporterId','createdByUserId','userId'],
+    clean:['officerId','reporterId','createdByUserId','userId']
+  }[String(module)] || ['createdByUserId','userId','ownerUserId'];
+  return records.filter(record=>{
+    if(ownerFields.some(key=>String(record[key]||'')===uid)) return true;
+    if(String(module)==='assets' && String(record.assignedToUserId||'')===uid) return true;
+    return false;
+  });
+}
+
 function listRecords_(user,module) {
   const name = moduleToSheet_(module);
   assertRead_(user,name);
@@ -359,9 +375,7 @@ function listRecords_(user,module) {
   let rows = values.length < 2 ? [] : values.slice(1).filter(r => String(r[0]) === String(module))
     .map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean);
   if (module === 'assets') rows = (rows.length ? rows : records_('Assets')).map(adaptAssetRecord_).filter(a => a.nama);
-  if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
-    rows = rows.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
-  }
+  rows=filterRecordsForUser_(user,module,rows);
   return {ok:true,records:rows};
 }
 
@@ -406,10 +420,7 @@ function listManyRecords_(user, modules) {
     if (module === 'assets') {
       records = (records.length ? records : records_('Assets')).map(adaptAssetRecord_).filter(a => a.nama);
     }
-    if (module === 'loans' && !['admin','pimpinan'].includes(String(user.role))) {
-      records = records.filter(r => String(r.borrowerUserId || r.createdByUserId || r.borrowerId || '') === String(user.userId));
-    }
-    out[module] = records;
+    out[module] = filterRecordsForUser_(user,module,records);
   });
   return {ok:true,records:out};
 }
@@ -419,10 +430,10 @@ function syncRecords_(user,module,records) {
   assertWrite_(user,name,'sync');
   if (!Array.isArray(records)) throw new Error('Daftar data tidak valid.');
   if (records.length > 2000) throw new Error('Maksimal 2.000 data per modul dalam satu sinkronisasi.');
-  if (name === 'Loans' && String(user.role) === 'dosen') {
-    records.forEach(record => {
-      const owner = String(record.borrowerUserId || record.createdByUserId || '');
-      if (owner !== String(user.userId)) throw new Error('Dosen hanya dapat menyimpan pengajuan peminjaman miliknya sendiri.');
+  const role=String(user.role);
+  if(!['admin','pimpinan'].includes(role)) {
+    records.forEach(record=>{
+      if(!filterRecordsForUser_(user,module,[record]).length) throw new Error('Anda hanya dapat menyinkronkan data milik akun sendiri.');
     });
   }
   const sh = sheet_('AppData'), lock = LockService.getScriptLock();
@@ -430,9 +441,7 @@ function syncRecords_(user,module,records) {
   try {
     const values = sh.getDataRange().getValues();
     const now = new Date().toISOString();
-    // Admin/Pimpinan may replace the full module snapshot. Other roles may only upsert,
-    // so a lecturer or facilities user cannot erase records created by other users.
-    if (['admin','pimpinan'].includes(String(user.role))) {
+    if (['admin','pimpinan'].includes(role)) {
       for (let i=values.length-1;i>=1;i--) if (String(values[i][0])===String(module)) sh.deleteRow(i+1);
       const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
       if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
@@ -446,8 +455,11 @@ function syncRecords_(user,module,records) {
       const id=String(record.id || Utilities.getUuid());
       const row=[String(module),id,JSON.stringify(record),now,user.userId];
       const rowNo=index.get(id);
-      if(rowNo) sh.getRange(rowNo,1,1,5).setValues([row]);
-      else sh.appendRow(row);
+      if(rowNo) {
+        let previous={}; try { previous=JSON.parse(current[rowNo-1][2]||'{}'); } catch(e) {}
+        if(!filterRecordsForUser_(user,module,[previous]).length) throw new Error('Data bukan milik akun Anda; pembaruan ditolak.');
+        sh.getRange(rowNo,1,1,5).setValues([row]);
+      } else sh.appendRow(row);
     });
     log_(user,'Sinkronisasi',name,'',records.length+' data diperbarui');
     return {ok:true,count:records.length,mode:'upsert'};
@@ -457,18 +469,20 @@ function syncRecords_(user,module,records) {
 function saveRecord_(user,module,record) {
   const name = moduleToSheet_(module); assertWrite_(user,name,'save');
   if (!record || typeof record !== 'object') throw new Error('Data tidak valid.');
-  if (name === 'Loans' && String(user.role) === 'dosen' &&
-      String(record.borrowerUserId || record.createdByUserId || '') !== String(user.userId)) {
-    throw new Error('Dosen hanya dapat menyimpan pengajuan peminjaman miliknya sendiri.');
+  if(!['admin','pimpinan'].includes(String(user.role))) {
+    if(!filterRecordsForUser_(user,module,[record]).length) throw new Error('Anda hanya dapat menyimpan data milik akun sendiri.');
   }
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const sh = sheet_(name), headers = CONFIG.SHEETS[name], values = sh.getDataRange().getValues();
+    const sh = sheet_('AppData'), values = sh.getDataRange().getValues();
     const id = String(record.id || Utilities.getUuid());
-    const idx = values.findIndex((r,i)=>i>0 && String(r[headers.indexOf('id')])===id);
-    const safe = headers.map(h => h==='id' ? id : (record[h] !== undefined ? record[h] : (h==='createdAt' ? new Date().toISOString() : '')));
-    if (idx > 0) sh.getRange(idx+1,1,1,headers.length).setValues([safe]);
-    else sh.appendRow(safe);
+    const idx = values.findIndex((r,i)=>i>0 && String(r[0])===String(module) && String(r[1])===id);
+    if(idx>0 && !['admin','pimpinan'].includes(String(user.role))) {
+      let old={}; try { old=JSON.parse(values[idx][2]||'{}'); } catch(e) {}
+      if(!filterRecordsForUser_(user,module,[old]).length) throw new Error('Data bukan milik akun Anda; perubahan ditolak.');
+    }
+    const row=[String(module),id,JSON.stringify(Object.assign({},record,{id})),new Date().toISOString(),user.userId];
+    if(idx>0) sh.getRange(idx+1,1,1,5).setValues([row]); else sh.appendRow(row);
     log_(user,'Simpan',name,id,'Record disimpan');
     return {ok:true,id};
   } finally { lock.releaseLock(); }
@@ -477,10 +491,15 @@ function saveRecord_(user,module,record) {
 function removeRecord_(user,module,id) {
   const name = moduleToSheet_(module); assertWrite_(user,name,'remove');
   if (name === 'Users' || name === 'ActivityLogs') throw new Error('Penghapusan data ini tidak diizinkan melalui API.');
-  const sh = sheet_(name), values = sh.getDataRange().getValues(), idCol = CONFIG.SHEETS[name].indexOf('id');
-  const idx = values.findIndex((r,i)=>i>0 && String(r[idCol])===String(id));
+  const sh = sheet_('AppData'), values = sh.getDataRange().getValues();
+  const idx = values.findIndex((r,i)=>i>0 && String(r[0])===String(module) && String(r[1])===String(id));
   if (idx < 1) throw new Error('Data tidak ditemukan.');
-  sh.deleteRow(idx+1); log_(user,'Hapus',name,String(id),'Record dihapus');
+  if(!['admin','pimpinan'].includes(String(user.role))) {
+    let record={}; try { record=JSON.parse(values[idx][2]||'{}'); } catch(e) {}
+    if(!filterRecordsForUser_(user,module,[record]).length) throw new Error('Data bukan milik akun Anda; penghapusan ditolak.');
+  }
+  sh.deleteRow(idx+1);
+  log_(user,'Hapus',name,String(id),'Record dihapus');
   return {ok:true};
 }
 
