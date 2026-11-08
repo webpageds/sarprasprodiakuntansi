@@ -18,7 +18,8 @@ const CONFIG = {
     AssetMutations: ['id','assetId','type','quantity','date','reason','approvedBy','notes','createdAt'],
     AssetDisposals: ['id','assetId','quantity','date','reason','approvedBy','notes','createdAt'],
     CleaningRecords: ['id','roomId','roomName','officerId','officerName','date','shift','status','notes','createdAt'],
-    ActivityLogs: ['id','userId','userName','action','module','recordId','details','createdAt']
+    ActivityLogs: ['id','userId','userName','action','module','recordId','details','createdAt'],
+    AppData: ['module','id','payload','updatedAt','updatedBy']
   }
 };
 
@@ -43,6 +44,7 @@ function doPost(e) {
       return json_({ok:true});
     }
     if (action === 'list') return json_(listRecords_(user, body.module));
+    if (action === 'sync') return json_(syncRecords_(user, body.module, body.records));
     if (action === 'save') return json_(saveRecord_(user, body.module, body.record));
     if (action === 'remove') return json_(removeRecord_(user, body.module, body.id));
     return json_({ok:false,error:'Action tidak dikenal.'});
@@ -101,7 +103,28 @@ function authenticate_(token) {
 function listRecords_(user,module) {
   const name = moduleToSheet_(module);
   assertRead_(user,name);
-  return {ok:true,records:records_(name)};
+  const sh = sheet_('AppData'), values = sh.getDataRange().getValues();
+  if (values.length < 2) return {ok:true,records:[]};
+  const rows = values.slice(1).filter(r => String(r[0]) === String(module));
+  return {ok:true,records:rows.map(r => { try { return JSON.parse(r[2]); } catch(e) { return null; } }).filter(Boolean)};
+}
+
+function syncRecords_(user,module,records) {
+  const name = moduleToSheet_(module);
+  assertWrite_(user,name,'sync');
+  if (!Array.isArray(records)) throw new Error('Daftar data tidak valid.');
+  if (records.length > 2000) throw new Error('Maksimal 2.000 data per modul dalam satu sinkronisasi.');
+  const sh = sheet_('AppData'), lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const values = sh.getDataRange().getValues();
+    for (let i=values.length-1;i>=1;i--) if (String(values[i][0])===String(module)) sh.deleteRow(i+1);
+    const now = new Date().toISOString();
+    const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
+    if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
+    log_(user,'Sinkronisasi',name,'',rows.length+' data disinkronkan');
+    return {ok:true,count:rows.length};
+  } finally { lock.releaseLock(); }
 }
 
 function saveRecord_(user,module,record) {
@@ -150,15 +173,15 @@ function assertWrite_(user,sheetName,operation) {
     if (role === 'pimpinan' && ['remove'].includes(operation)) throw new Error('Pimpinan tidak dapat menghapus data.');
     return;
   }
-  if (sheetName==='Loans' && role==='dosen' && operation==='save') return;
-  if (sheetName==='Repairs' && ['dosen','petugas'].includes(role) && operation==='save') return;
-  if (sheetName==='CleaningRecords' && role==='petugas' && operation==='save') return;
+  if (sheetName==='Loans' && role==='dosen' && ['save','sync'].includes(operation)) return;
+  if (sheetName==='Repairs' && ['dosen','petugas'].includes(role) && ['save','sync'].includes(operation)) return;
+  if (sheetName==='CleaningRecords' && ['dosen','petugas'].includes(role) && ['save','sync'].includes(operation)) return;
   if (adminOnly.includes(sheetName)) throw new Error('Hanya Admin/Pimpinan yang dapat mengubah modul ini.');
   throw new Error('Akses perubahan data ditolak.');
 }
 
 function moduleToSheet_(module) {
-  const map={assets:'Assets',rooms:'Rooms',stockItems:'StockItems',stockTransactions:'StockTransactions',loans:'Loans',repairs:'Repairs',assetMutations:'AssetMutations',assetDisposals:'AssetDisposals',cleaningRecords:'CleaningRecords',activityLogs:'ActivityLogs'};
+  const map={assets:'Assets',rooms:'Rooms',stockItems:'StockItems',stockTransactions:'StockTransactions',loans:'Loans',repairs:'Repairs',assetMutations:'AssetMutations',assetDisposals:'AssetDisposals',cleaningRecords:'CleaningRecords',activityLogs:'ActivityLogs',stock:'StockItems',tx:'StockTransactions',mutasi:'AssetMutations',hapus:'AssetDisposals',clean:'CleaningRecords',log:'ActivityLogs'};
   const name=map[String(module||'')]; if(!name) throw new Error('Modul tidak valid.'); return name;
 }
 function records_(name) {
