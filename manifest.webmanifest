@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "SIM-SPA Prodi Akuntansi",
-  "short_name": "SIM-SPA",
-  "description": "Sistem Informasi Manajemen Sarana dan Prasarana Program Studi Akuntansi",
+  "name": "SIAP — Sistem Informasi Aset & Prasarana",
+  "short_name": "SIAP",
+  "description": "Sistem Informasi Aset & Prasarana Program Studi Akuntansi",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
