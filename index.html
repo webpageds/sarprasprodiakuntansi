@@ -300,12 +300,18 @@ async function apiCall(payload,token){
   const onMessage=(event)=>{
    const data=event.data;
    if(!data||data.type!=='SIMSPA_API_RESPONSE'||data.nonce!==nonce)return;
+   // Apps Script replies from the hidden iframe; Safari/iOS may report
+   // the iframe's origin differently, so validate the message nonce.
    cleanup();
    if(!data.payload||!data.payload.ok) reject(new Error((data.payload&&data.payload.error)||'Permintaan backend gagal.'));
    else resolve(data.payload);
   };
+  frame.addEventListener('load',()=>{
+   // If the iframe navigated but Apps Script did not post a response,
+   // keep waiting briefly for delayed mobile-network responses.
+  });
   window.addEventListener('message',onMessage);
-  timer=setTimeout(()=>{cleanup();reject(new Error('Koneksi ke Apps Script melewati batas 20 detik. Pastikan Code.gs terbaru sudah di-deploy sebagai New version, lalu coba masuk kembali.'));},20000);
+  timer=setTimeout(()=>{cleanup();reject(new Error('Aplikasi belum menerima balasan dari Apps Script. Coba buka ulang halaman dan periksa koneksi internet. Jika masih terjadi, admin perlu memeriksa deployment Apps Script.'));},30000);
   document.body.append(frame,form);
   form.submit();
  });
