@@ -19,7 +19,7 @@
 #loginScreen[hidden]{display:none}
 .login-shell{width:min(1080px,100%);display:grid;grid-template-columns:1fr 1.1fr;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 30px 90px #061a2b66}
 .login-intro{background:linear-gradient(155deg,#12324e,#0e675f);color:#fff;padding:46px 42px;display:flex;flex-direction:column;justify-content:space-between;min-height:590px;position:relative;overflow:hidden}
-.login-intro:after{content:'SPA';position:absolute;font:800 180px Manrope;right:-12px;bottom:40px;color:#ffffff0b;pointer-events:none}
+.login-intro:after{content:'SIAP';position:absolute;font:800 180px Manrope;right:-12px;bottom:40px;color:#ffffff0b;pointer-events:none}
 .login-brand{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
 .login-mark{height:48px;width:48px;border-radius:15px;background:#dff7f2;color:#0e655e;display:grid;place-items:center;font:800 17px Manrope}
 .login-intro h1{font:800 clamp(28px,4vw,40px)/1.13 Manrope;margin:48px 0 13px;position:relative;z-index:1}
@@ -194,6 +194,58 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #loginForm input:focus{border-color:#0d9488;outline:3px solid #7dd3c733}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
 </style><script>
+// SIAP install: installs a shortcut/app shell that always opens this same live website.
+(function(){
+  var deferredInstallPrompt = null;
+  function installPanelMarkup(){
+    return '<section id="siapInstallPanel" style="margin-top:22px;padding:14px;border:1px solid #dce8ef;border-radius:14px;background:#f6fafc;display:flex;align-items:center;gap:13px;flex-wrap:wrap">'
+      + '<div style="width:38px;height:38px;border-radius:11px;background:#e2f3ef;color:#087b70;display:grid;place-items:center;font-size:20px;flex:0 0 auto">↗</div>'
+      + '<div style="flex:1;min-width:180px"><b style="display:block;color:#18344d;font:800 13px Manrope">Pasang SIAP di perangkat</b>'
+      + '<span style="display:block;color:#64778a;font-size:11px;line-height:1.5;margin-top:3px">Akses dari desktop atau layar utama HP. Tetap terhubung ke website SIAP.</span></div>'
+      + '<button id="siapInstallButton" type="button" style="padding:10px 15px;border:0;border-radius:9px;background:#0d9488;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Pasang SIAP</button>'
+      + '<div id="siapInstallHelp" style="display:none;flex-basis:100%;color:#64778a;font-size:11px;line-height:1.5"></div></section>';
+  }
+  function showInstallHelp(){
+    var help=document.getElementById('siapInstallHelp');
+    if(!help)return;
+    var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    var android=/android/i.test(navigator.userAgent);
+    if(ios) help.textContent='Di Safari: tekan tombol Bagikan, lalu pilih “Tambahkan ke Layar Utama”.';
+    else if(android) help.textContent='Di Chrome: tekan menu ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.';
+    else help.textContent='Di Chrome atau Edge: buka menu ⋮, pilih “Install SIAP” atau “Apps → Install this site as an app”.';
+    help.style.display='block';
+  }
+  function attachInstallPanel(){
+    var chooser=document.getElementById('roleChooser');
+    if(!chooser || document.getElementById('siapInstallPanel'))return;
+    chooser.insertAdjacentHTML('afterend',installPanelMarkup());
+    var btn=document.getElementById('siapInstallButton');
+    if(btn)btn.addEventListener('click',async function(){
+      if(deferredInstallPrompt){
+        deferredInstallPrompt.prompt();
+        try{await deferredInstallPrompt.userChoice}catch(e){}
+        deferredInstallPrompt=null;
+      }else showInstallHelp();
+    });
+  }
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();deferredInstallPrompt=e;
+  });
+  window.addEventListener('appinstalled',function(){
+    var btn=document.getElementById('siapInstallButton');
+    if(btn)btn.textContent='SIAP terpasang';
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachInstallPanel);
+  else attachInstallPanel();
+  // Re-attach when login form is reset or role selection is restored.
+  var observer=new MutationObserver(attachInstallPanel);
+  document.addEventListener('DOMContentLoaded',function(){
+    var login=document.getElementById('loginScreen');
+    if(login)observer.observe(login,{childList:true,subtree:true});
+  });
+})();
+
+
 /* Isi URL /exec setelah deployment Apps Script. */
 window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
 </script>
@@ -210,7 +262,7 @@ window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu
  <div class="login-shell">
   <section class="login-intro">
    <div>
-    <div class="login-brand"><div class="login-mark">SPA</div><div><b style="font:800 14px Manrope;display:block">SIM–SPA PRODI</b><small style="color:#b8d3dc">PROGRAM STUDI AKUNTANSI</small></div></div>
+    <div class="login-brand"><div class="login-mark">SIAP</div><div><b style="font:800 14px Manrope;display:block">SIAP</b><small style="color:#b8d3dc">PROGRAM STUDI AKUNTANSI</small></div></div>
     <h1>Kelola Sarana<br>& Prasarana<br>Lebih Terarah.</h1>
     <p>Sistem Informasi Aset & Prasarana Program Studi Akuntansi untuk mendukung pengelolaan aset, fasilitas, dan layanan prodi.</p>
     <div class="login-points"><div class="login-point"><span>▣</span>Inventaris aset dan pemeliharaan terstruktur</div><div class="login-point"><span>⇄</span>Layanan peminjaman dan persetujuan</div><div class="login-point"><span>▧</span>Pelaporan dan pemantauan terintegrasi</div></div>
@@ -247,7 +299,7 @@ window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu
  </div>
 </div>
 <div class="app" id="appShell" hidden>
-<aside class="sidebar" id="sidebar"><div class="brand"><div class="brandmark">SPA</div><div><strong>SIM–SPA PRODI</strong><small>Akuntansi · Sarana & Prasarana</small></div></div><div class="navlabel">MENU UTAMA</div><div class="nav" id="sideNav"></div><div class="sidefoot"><b>Program Studi Akuntansi</b>Sistem informasi pengelolaan sarpras<br><span id="storageState">Penyimpanan perangkat aktif</span></div></aside>
+<aside class="sidebar" id="sidebar"><div class="brand"><div class="brandmark">SIAP</div><div><strong>SIAP</strong><small>Akuntansi · Sarana & Prasarana</small></div></div><div class="navlabel">MENU UTAMA</div><div class="nav" id="sideNav"></div><div class="sidefoot"><b>Program Studi Akuntansi</b>Sistem informasi pengelolaan sarpras<br><span id="storageState">Penyimpanan perangkat aktif</span></div></aside>
 <div class="mainwrap"><header class="topbar"><div style="display:flex;align-items:center;gap:13px"><button class="mobile-toggle" id="toggle">☰</button><div class="crumb">Sistem Informasi / <b id="crumb">Ringkasan Dashboard</b></div></div><div class="top-actions"><span class="rolebox" id="activeRoleLabel">Admin Prodi</span><button class="btn sm" data-action="logout">Keluar ↗</button><div class="avatar" id="avatar">A</div></div></header><main class="content" id="content"></main></div>
 <div class="mobile-nav"><div class="nav" id="mobileNav"></div></div>
 </div><div class="modalback" id="modalback" hidden><section class="modal" id="modal"></section></div><script>
