@@ -1,13 +1,6 @@
 <!doctype html>
 <html lang="id">
 <head>
-<!-- SIAP PWA install metadata -->
-<link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#0b1f3a">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" type="image/svg+xml" href="./assets/app-icon.svg">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b46"><meta name="description" content="Sistem Informasi Aset & Prasarana Program Studi Akuntansi">
 <title>SIAP | Aset & Prasarana Akuntansi</title>
@@ -194,62 +187,8 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #loginForm input:focus{border-color:#0d9488;outline:3px solid #7dd3c733}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
 </style><script>
-// SIAP install: installs a shortcut/app shell that always opens this same live website.
-(function(){
-  var deferredInstallPrompt = null;
-  function installPanelMarkup(){
-    return '<section id="siapInstallPanel" style="margin-top:22px;padding:14px;border:1px solid #dce8ef;border-radius:14px;background:#f6fafc;display:flex;align-items:center;gap:13px;flex-wrap:wrap">'
-      + '<div style="width:38px;height:38px;border-radius:11px;background:#e2f3ef;color:#087b70;display:grid;place-items:center;font-size:20px;flex:0 0 auto">↗</div>'
-      + '<div style="flex:1;min-width:180px"><b style="display:block;color:#18344d;font:800 13px Manrope">Pasang SIAP di perangkat</b>'
-      + '<span style="display:block;color:#64778a;font-size:11px;line-height:1.5;margin-top:3px">Akses dari desktop atau layar utama HP. Tetap terhubung ke website SIAP.</span></div>'
-      + '<button id="siapInstallButton" type="button" style="padding:10px 15px;border:0;border-radius:9px;background:#0d9488;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Pasang SIAP</button>'
-      + '<div id="siapInstallHelp" style="display:none;flex-basis:100%;color:#64778a;font-size:11px;line-height:1.5"></div></section>';
-  }
-  function showInstallHelp(){
-    var help=document.getElementById('siapInstallHelp');
-    if(!help)return;
-    var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    var android=/android/i.test(navigator.userAgent);
-    if(ios) help.textContent='Di Safari: tekan tombol Bagikan, lalu pilih “Tambahkan ke Layar Utama”.';
-    else if(android) help.textContent='Di Chrome: tekan menu ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.';
-    else help.textContent='Di Chrome atau Edge: buka menu ⋮, pilih “Install SIAP” atau “Apps → Install this site as an app”.';
-    help.style.display='block';
-  }
-  function attachInstallPanel(){
-    var chooser=document.getElementById('roleChooser');
-    if(!chooser || document.getElementById('siapInstallPanel'))return;
-    chooser.insertAdjacentHTML('afterend',installPanelMarkup());
-    var btn=document.getElementById('siapInstallButton');
-    if(btn)btn.addEventListener('click',async function(){
-      if(deferredInstallPrompt){
-        deferredInstallPrompt.prompt();
-        try{await deferredInstallPrompt.userChoice}catch(e){}
-        deferredInstallPrompt=null;
-      }else showInstallHelp();
-    });
-  }
-  window.addEventListener('beforeinstallprompt',function(e){
-    e.preventDefault();deferredInstallPrompt=e;
-  });
-  window.addEventListener('appinstalled',function(){
-    var btn=document.getElementById('siapInstallButton');
-    if(btn)btn.textContent='SIAP terpasang';
-  });
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachInstallPanel);
-  else attachInstallPanel();
-  // Re-attach when login form is reset or role selection is restored.
-  var observer=new MutationObserver(attachInstallPanel);
-  document.addEventListener('DOMContentLoaded',function(){
-    var login=document.getElementById('loginScreen');
-    if(login)observer.observe(login,{childList:true,subtree:true});
-  });
-})();
-
-
-
-
 /* Isi URL /exec setelah deployment Apps Script. */
-window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
+window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
 </script>
 
 </head>
@@ -257,7 +196,7 @@ window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu
 <!--
  SIAP LOGIN HOTFIX:
  The page always starts at the credential form. No role picker or stored session is restored.
- Backend authentication is not yet wired to data CRUD; configure SIAP_API_URL only after Apps Script endpoint is deployed.
+ Backend authentication is not yet wired to data CRUD; configure SIMSPA_API_URL only after Apps Script endpoint is deployed.
 -->
 
 <div id="loginScreen">
@@ -283,6 +222,12 @@ window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu
      <button class="role-card" type="button" data-login-role="petugas"><span class="role-icon">✳</span><b>Petugas Kebersihan</b><small>Checklist kebersihan dan laporan</small></button>
     </div>
     <div class="login-hint">Akses menu ditentukan oleh role akun yang terdaftar.</div>
+    <section id="siapInstallPanel" style="margin-top:22px;padding:14px;border:1px solid #dce8ef;border-radius:14px;background:#f6fafc;display:flex;align-items:center;gap:13px;flex-wrap:wrap">
+     <div style="width:38px;height:38px;border-radius:11px;background:#e2f3ef;color:#087b70;display:grid;place-items:center;font-size:20px;flex:0 0 auto">↗</div>
+     <div style="flex:1;min-width:180px"><b style="display:block;color:#18344d;font:800 13px Manrope">Pasang SIAP di perangkat</b><span style="display:block;color:#64778a;font-size:11px;line-height:1.5;margin-top:3px">Akses dari desktop atau layar utama HP. Tetap terhubung ke website SIAP.</span></div>
+     <button id="siapInstallButton" type="button" style="padding:10px 15px;border:0;border-radius:9px;background:#0d9488;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Pasang SIAP</button>
+     <div id="siapInstallHelp" style="display:none;flex-basis:100%;color:#64778a;font-size:11px;line-height:1.5"></div>
+    </section>
    </div>
    <div id="credentialPanel" hidden>
     <div class="eyebrow" id="credentialEyebrow">LOGIN PENGGUNA</div>
@@ -333,47 +278,22 @@ function compressInfocusPhoto(file,maxBytes){return new Promise((resolve,reject)
 async function stopQrScanner(){if(!activeQrScanner)return;const scanner=activeQrScanner;activeQrScanner=null;try{await scanner.stop();await scanner.clear();}catch(e){}}
 async function startInfocusScanner(inputId){try{openInfo('<h2>Scan QR Infocus</h2><p>Arahkan kamera belakang ke QR yang ditempel pada Infocus.</p><div id="infocusQrReader" style="width:100%;max-width:440px;margin:auto"></div><p class="muted">Izinkan akses kamera pada browser dan gunakan HTTPS.</p>');await loadScriptOnce('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js','Html5Qrcode');if(!document.getElementById('infocusQrReader'))throw new Error('Area kamera tidak ditemukan.');activeQrScanner=new Html5Qrcode('infocusQrReader');await activeQrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},async decoded=>{const input=document.getElementById(inputId);if(input)input.value=decoded;await stopQrScanner();closeModal();toast('QR berhasil terbaca.');},()=>{});}catch(e){await stopQrScanner();toast(e.message||'Kamera tidak dapat dibuka. Izinkan akses kamera dan gunakan HTTPS.');}}
 async function renderInfocusQrCards(){await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode');document.querySelectorAll('[data-infocus-qr]').forEach(el=>{el.innerHTML='';new QRCode(el,{text:el.dataset.infocusQr,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});});}
-function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script><script>
-/* SIAP installable web app: no duplicate login/app code, opens this same site. */
+function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script>
+<script>
 (function(){
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('./service-worker.js').catch(function(err){
-        console.warn('SIAP offline/install support:', err);
-      });
-    });
-  }
-  var deferredInstallPrompt = null;
-  window.addEventListener('beforeinstallprompt', function(event){
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    var btn = document.getElementById('simspaInstallButton');
-    if (btn) btn.hidden = false;
-  });
-  window.addEventListener('appinstalled', function(){
-    deferredInstallPrompt = null;
-    var btn = document.getElementById('simspaInstallButton');
-    if (btn) btn.textContent = 'SIAP sudah terpasang';
-  });
-  window.simspaInstall = async function(){
-    if (!deferredInstallPrompt) {
-      alert('Untuk memasang aplikasi: buka menu browser (⋮) lalu pilih Apps > Install this site as an app, atau Install page as app.');
-      return;
-    }
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-  };
-  document.addEventListener('DOMContentLoaded', function(){
-    var panel=document.createElement('section');
-    panel.id='simspaInstallPanel';
-    panel.style.cssText='max-width:1080px;margin:16px auto;padding:0 16px;';
-    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIAP di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIAP.</span></div><button id="simspaInstallButton" type="button" style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
-    var roleChooser=document.getElementById('roleChooser');
-    if(roleChooser && roleChooser.parentNode) roleChooser.parentNode.insertBefore(panel,roleChooser);
-    var btn=document.getElementById('simspaInstallButton');
-    if(btn) btn.addEventListener('click',window.simspaInstall);
-  });
+ var deferredPrompt=null;
+ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
+ window.addEventListener('appinstalled',function(){var b=document.getElementById('siapInstallButton');if(b)b.textContent='SIAP terpasang';deferredPrompt=null;});
+ var b=document.getElementById('siapInstallButton');
+ if(b)b.addEventListener('click',function(){
+   if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;}).catch(function(){deferredPrompt=null;});return;}
+   var help=document.getElementById('siapInstallHelp');if(!help)return;
+   var ua=navigator.userAgent;
+   if(/iphone|ipad|ipod/i.test(ua))help.textContent='Safari: tekan Bagikan, lalu pilih Tambahkan ke Layar Utama.';
+   else if(/android/i.test(ua))help.textContent='Chrome: buka menu ⋮ lalu pilih Instal aplikasi atau Tambahkan ke layar utama.';
+   else help.textContent='Edge/Chrome: buka menu ⋯ lalu pilih Apps → Install this site as an app.';
+   help.style.display='block';
+ });
 })();
 </script>
 </body></html>');win.document.close();}
@@ -396,14 +316,14 @@ async function apiCall(payload,token){
   frame.name='simspa_frame_'+nonce;
   frame.style.display='none';
   const form=document.createElement('form');
-  form.method='POST';form.action=window.SIAP_API_URL;form.target=frame.name;form.style.display='none';
+  form.method='POST';form.action=window.SIMSPA_API_URL;form.target=frame.name;form.style.display='none';
   const input=document.createElement('input');
   input.type='hidden';input.name='payload';input.value=JSON.stringify(body);form.appendChild(input);
   let timer;
   const cleanup=()=>{clearTimeout(timer);window.removeEventListener('message',onMessage);form.remove();frame.remove();};
   const onMessage=(event)=>{
    const data=event.data;
-   if(!data||data.type!=='SIAP_API_RESPONSE'||data.nonce!==nonce)return;
+   if(!data||data.type!=='SIMSPA_API_RESPONSE'||data.nonce!==nonce)return;
    // Apps Script replies from the hidden iframe; Safari/iOS may report
    // the iframe's origin differently, so validate the message nonce.
    cleanup();
@@ -512,7 +432,7 @@ dash(){
    '<section class="panel"><div class="panelhead"><h3>Daftar peminjaman</h3><small>'+loanRows.length+' transaksi tercatat</small></div>'+table(['Peminjam','Barang','Tanggal pinjam','Rencana kembali','Keperluan','Status','Tindakan'],rows)+'</section>';
  },
  infocus(){
- const admin=allowed('admin','pimpinan'),all=(S.loans||[]).filter(x=>x.type==='infocus'),records=role==='dosen'?all.filter(x=>String(x.borrowerUserId)===String(currentUser.id)):all,active=all.filter(x=>!x.returnedAt),myActive=records.filter(x=>!x.returnedAt),fmt=v=>v?new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'—',assetRows=(S.assets||[]).filter(a=>/infocus|infokus|proyektor/i.test(String(a.nama||a.name||''))&&String(a.status||'Aktif')!=='Dihapus'),total=assetRows.reduce((sum,a)=>sum+Math.max(0,Number(a.jumlah??a.quantity??a.qty??1)||0),0),borrowed=active.reduce((sum,x)=>sum+Math.max(1,Number(x.quantity)||1),0),available=Math.max(0,total-borrowed);window.infocusPoolStatus={totalQuantity:total,borrowedQuantity:borrowed,availableQuantity:available};
+ const admin=allowed('admin','pimpinan'),all=(S.loans||[]).filter(x=>x.type==='infocus'),records=role==='dosen'?all.filter(x=>String(x.borrowerUserId)===String(currentUser.id)):all,active=records.filter(x=>!x.returnedAt),fmt=v=>v?new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'—',total=Number(window.infocusPoolStatus?.totalQuantity||0),borrowed=Number(window.infocusPoolStatus?.borrowedQuantity||0),available=Number(window.infocusPoolStatus?.availableQuantity||Math.max(0,total-borrowed));
  const rows=records.slice().reverse().map(x=>[esc(x.unitCode||'POOL-INFOCUS'),(Number(x.quantity)||1)+' unit',esc(x.peminjam),esc(x.usageLocation),fmt(x.borrowedAt),fmt(x.dueAt),statusBadge(x.returnedAt?x.status:(Date.now()>Date.parse(x.dueAt)?'Terlambat':'Dipinjam')),x.returnPhotoFileId?'<button class="btn sm" data-action="infocus-photo|'+esc(x.id)+'">Lihat foto</button>':'—']);
  return pageHead('Peminjaman Infocus','Satu QR untuk seluruh stok Infokus. Scan QR yang sama saat pinjam dan kembali.',admin?'<button class="btn primary" data-action="infocus-setup">Siapkan QR Umum</button>':'')+
  '<section class="panel"><div class="panelhead"><h3>Ketersediaan Infokus</h3><small>'+total+' total unit</small></div><div class="kpi-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px"><div class="kpi"><span>Total unit</span><strong>'+total+'</strong></div><div class="kpi"><span>Sedang dipinjam</span><strong>'+borrowed+'</strong></div><div class="kpi"><span>Tersedia</span><strong>'+available+'</strong></div></div></section>'+
@@ -538,7 +458,7 @@ case'mapping-load':return (async()=>{try{const r=await apiCall({action:'adminLis
 case'asset-assign':{const target=S.assets.find(x=>x.id===p);const select=Array.from(document.querySelectorAll('[data-map-owner]')).find(x=>x.getAttribute('data-map-owner')===p);if(!target||!select)return toast('Aset atau pilihan dosen tidak ditemukan');return (async()=>{try{const res=await apiCall({action:'adminAssignAssetOwner',assetId:p,userId:select.value},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));target.assignedToUserId=res.assignedToUserId||'';target.assignedToName=res.assignedToName||'';render();toast(res.assignedToName?'Aset berhasil ditautkan ke '+res.assignedToName:'Tautan aset dilepas')}catch(e){toast(e.message)}})();}
 case'users-load':return (async()=>{try{const r=await apiCall({action:'adminListUsers'},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));usersCache=r.users||[];render();toast('Daftar akun berhasil dimuat')}catch(e){toast(e.message)}})();
 case'users-reset':{const u=usersCache.find(x=>x.userId===p);if(!u)return toast('Akun tidak ditemukan');const first=window.prompt('Masukkan password sementara baru untuk '+u.name+' (minimal 12 karakter):');if(!first)return;if(first.length<12)return toast('Password minimal 12 karakter');const second=window.prompt('Ulangi password sementara:');if(first!==second)return toast('Konfirmasi password tidak sama');return (async()=>{try{await apiCall({action:'adminResetPassword',userId:u.userId,newPassword:first},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));toast('Password direset. Sampaikan secara pribadi kepada pengguna.');const r=await apiCall({action:'adminListUsers'},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));usersCache=r.users||[];render()}catch(e){toast(e.message)}})();}
-case'infocus-setup':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusSetup'},token);window.infocusPoolStatus=r.pool||{};openInfo('<h2>QR Umum Infokus</h2><p>Satu QR ini digunakan untuk seluruh '+esc(r.pool.totalQuantity)+' unit. Tempelkan satu QR di area penyimpanan Infokus. QR yang sama dipakai saat peminjaman dan pengembalian.</p><div data-infocus-qr="SIAP-INFOCUS-POOL" data-name="QR Umum Infokus" data-code="POOL-INFOCUS" style="margin:16px auto;width:180px;min-height:180px"></div><p><b>Total:</b> '+r.pool.totalQuantity+' unit &nbsp; <b>Dipinjam:</b> '+r.pool.borrowedQuantity+' &nbsp; <b>Tersedia:</b> '+r.pool.availableQuantity+'</p><div class="actions"><button class="btn primary" data-action="infocus-print">Cetak QR Umum</button></div>');await renderInfocusQrCards();}catch(e){toast(e.message);}})();
+case'infocus-setup':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusSetup'},token);window.infocusPoolStatus=r.pool||{};openInfo('<h2>QR Umum Infokus</h2><p>Satu QR ini digunakan untuk seluruh '+esc(r.pool.totalQuantity)+' unit. Tempelkan satu QR di area penyimpanan Infokus. QR yang sama dipakai saat peminjaman dan pengembalian.</p><div data-infocus-qr="SIMSPA-INFOCUS-POOL" data-name="QR Umum Infokus" data-code="POOL-INFOCUS" style="margin:16px auto;width:180px;min-height:180px"></div><p><b>Total:</b> '+r.pool.totalQuantity+' unit &nbsp; <b>Dipinjam:</b> '+r.pool.borrowedQuantity+' &nbsp; <b>Tersedia:</b> '+r.pool.availableQuantity+'</p><div class="actions"><button class="btn primary" data-action="infocus-print">Cetak QR Umum</button></div>');await renderInfocusQrCards();}catch(e){toast(e.message);}})();
 case'infocus-checkout':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,room=document.getElementById('infocusRoom').value.trim(),qr=document.getElementById('infocusQr').value.trim(),quantity=Number(document.getElementById('infocusQuantity').value);if(!room||!qr)throw new Error('Isi kelas dan scan QR umum.');const result=await apiCall({action:'infocusCheckout',usageLocation:room,qrValue:qr,quantity},token);window.infocusPoolStatus=result.pool||window.infocusPoolStatus;const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil meminjam '+quantity+' unit. Sisa '+window.infocusPoolStatus.availableQuantity+' unit. Batas 24 jam.')}catch(e){toast(e.message)}})();
 case'infocus-return':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,file=document.getElementById('infocusPhoto_'+p).files[0],qr=document.getElementById('infocusReturnQr_'+p).value.trim();if(!file||!qr)throw new Error('Foto dan QR wajib.');const data=await compressInfocusPhoto(file,950000);await apiCall({action:'infocusReturn',loanId:p,qrValue:qr,photoData:data},token);const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil dikembalikan, foto tersimpan di Drive.')}catch(e){toast(e.message)}})();
 case'infocus-photo':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusPhoto',loanId:p},token);openInfo('<h2>Foto kondisi</h2><img src="'+r.dataUrl+'" alt="Foto Infocus" style="max-width:100%;max-height:65vh">')}catch(e){toast(e.message)}})();
