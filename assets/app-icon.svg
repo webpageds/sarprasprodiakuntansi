@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#0b1f3a"/>
-<path d="M116 150h280v52H116zM116 230h280v52H116zM116 310h164v52H116z" fill="#fff"/>
-<circle cx="365" cy="336" r="54" fill="#caa45a"/>
-<path d="M340 336l17 17 34-38" fill="none" stroke="#0b1f3a" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102b46"/><stop offset="1" stop-color="#0d655f"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#g)"/>
+<path d="M92 100h328a24 24 0 0 1 24 24v264a24 24 0 0 1-24 24H92a24 24 0 0 1-24-24V124a24 24 0 0 1 24-24z" fill="#ffffff" opacity=".09"/>
+<text x="256" y="257" text-anchor="middle" font-family="Arial,sans-serif" font-size="142" font-weight="800" letter-spacing="-8" fill="#fff">SIAP</text>
+<path d="M126 306h260" stroke="#d8b66b" stroke-width="13" stroke-linecap="round"/>
+<text x="256" y="355" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="700" letter-spacing="4" fill="#dbe9ef">ASET &amp; PRASARANA</text>
 </svg>
