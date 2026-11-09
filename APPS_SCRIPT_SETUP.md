@@ -78,3 +78,51 @@ URL Web App perlu dipasang ke frontend dan semua modul perlu dialihkan dari loca
 - Jika hanya frontend yang diperbarui tetapi backend deployment lama masih aktif, login mungkin berhasil tetapi sinkronisasi modul akan gagal karena action `sync` belum tersedia di versi deployment tersebut.
 - Pada login pertama, frontend mengambil data yang sudah ada di AppData; ia tidak lagi menginisialisasi data contoh lokal.
 - Uji koneksi browser diperlukan karena browser dapat membatasi request lintas domain ke Apps Script. Jika Console menampilkan CORS/network error, integrasi perlu disesuaikan dengan mekanisme proxy/host yang didukung.
+
+
+## Integrasi dan konfigurasi roster dosen (branch pembaruan)
+
+Branch `feature/admin-dosen-dashboard-integration` menambahkan:
+- Filter record pada API untuk pengguna non-admin berdasarkan pemilik record/ID akun.
+- Validasi agar pengguna tidak dapat mengubah atau menghapus record pengguna lain melalui endpoint AppData.
+- Helper `importRosterFromStaffSpreadsheet()` yang membaca tab spreadsheet sumber dengan gid `390669889`, mengenali kolom Nama dan NUPTK, lalu menyalin roster ke `LecturerRoster`.
+- Frontend membatasi daftar aset dosen pada aset yang ditautkan dan memakai daftar peminjaman dari API yang sudah difilter.
+- Dashboard dosen memfilter daftar perbaikan/kebersihan berdasarkan field kepemilikan; dashboard admin mempertahankan rekap sistem.
+- Proses penyimpanan frontend menunggu sinkronisasi selesai dan menampilkan status gagal bila backend menolak.
+
+### Tahap A — Perbarui Apps Script
+1. Buka Apps Script project yang sudah dimiliki pengelola.
+2. Ganti seluruh isi `Code.gs` dengan versi file `apps-script/Code.gs` dari branch pembaruan.
+3. Pastikan nilai `SPREADSHEET_ID` tetap mengarah pada spreadsheet database yang benar.
+4. Simpan, lalu jalankan `initializeDatabase` dan pastikan otorisasi berhasil.
+5. Jalankan `importRosterFromStaffSpreadsheet` satu kali. Fungsi ini membaca tab dengan gid 390669889 dari spreadsheet roster, dan menyalin kolom Nama/NUPTK ke tab `LecturerRoster`.
+6. Tinjau tab `LecturerRoster`: setiap NUPTK harus tetap sebagai teks 16 digit dan role dosen.
+
+**Perhatian:** helper import mengosongkan isi tab `LecturerRoster` sebelum menulis roster baru. Jangan gunakan tab itu untuk catatan lain. Data Users yang sudah dibuat tidak dihapus atau diganti oleh helper tersebut.
+
+### Tahap B — Buat akun dosen
+1. Jalankan `importLecturersFromRosterSheet` satu kali.
+2. Buka Execution log untuk melihat pemberitahuan hasil; password sementara tidak boleh dibagikan lewat grup umum.
+3. Bagikan username NUPTK dan password sementara kepada dosen masing-masing melalui kanal privat.
+4. Dosen login dan membuat password baru minimal 12 karakter.
+5. Jangan meneruskan Execution log yang memuat kredensial. Hapus/bersihkan log yang tersimpan sesuai kebijakan pengelola.
+
+### Tahap C — Deploy Apps Script
+1. Pilih Deploy → Manage deployments.
+2. Edit deployment Web App yang URL-nya dipakai frontend.
+3. Pilih New version, lalu Deploy.
+4. Pastikan URL /exec yang dipasang pada index.html adalah deployment aktif yang sama.
+5. Login admin, dosen uji, dan verifikasi akses masing-masing menggunakan dua akun uji yang berbeda.
+
+### Tahap D — Verifikasi akses sebelum penggunaan
+- Admin dapat membaca rekap seluruh modul yang diizinkan.
+- Dosen hanya dapat membaca record yang memiliki ID pemilik akun atau aset yang ditautkan.
+- Coba panggil API dari akun dosen dengan ID record milik dosen lain; operasi harus ditolak.
+- Buat satu pengajuan uji, lalu pastikan record muncul di Google Sheets dan hanya terlihat oleh pemilik serta admin/pimpinan.
+- Uji peminjaman, kerusakan, kebersihan, export laporan, serta session timeout.
+- Backup spreadsheet sebelum sinkronisasi admin pertama.
+
+### Batasan yang masih perlu diuji
+Integrasi lintas domain melalui iframe/postMessage harus diuji pada browser dan deployment yang sebenarnya. Filter record menggunakan field kepemilikan record; data lama yang tidak memiliki owner ID atau belum dipetakan tidak otomatis dianggap sebagai milik dosen. Aset lama perlu ditautkan oleh Admin melalui menu Pemetaan Aset Dosen.
+
+Hash SHA-256 pada starter ini adalah mekanisme hash sederhana, bukan password hashing adaptif modern. Untuk penggunaan produksi, evaluasi Google Identity/Workspace atau mekanisme autentikasi yang lebih kuat, pengelolaan sesi tahan lama, pembatasan akses deployment, audit, dan kebijakan perlindungan data pribadi.
