@@ -550,7 +550,6 @@ function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)
 
 
 const INFOCUS_DRIVE_FOLDER_ID = '19mKbMROWNqNILJaMXEAcHQ7OG1u63dOR';
-const INFOCUS_DRIVE_FOLDER_ID = '19mKbMROWNqNILJaMXEAcHQ7OG1u63dOR';
 const INFOCUS_POOL_QR = 'SIMSPA-INFOCUS-POOL';
 const INFOCUS_POOL_CODE = 'POOL-INFOCUS';
 
