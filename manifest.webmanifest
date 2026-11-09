@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "SIM-SPA Prodi Akuntansi",
+  "short_name": "SIM-SPA",
+  "description": "Sistem Informasi Manajemen Sarana dan Prasarana Program Studi Akuntansi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#0b1f3a",
+  "icons": [
+    {
+      "src": "./assets/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
