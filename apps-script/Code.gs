@@ -553,7 +553,8 @@ function infocusSave_(user,record){
 }
 function infocusUnits_(user){
  if(!['admin','pimpinan','dosen'].includes(String(user.role)))throw new Error('Akses ditolak.');
- return records_('Assets').map(adaptAssetRecord_).filter(a=>/infocus|proyektor/i.test(a.nama)&&a.status!=='Dihapus').map(a=>({unitCode:a.kode||a.id,name:a.nama,qrValue:'SIMSPA-INFOCUS:'+String(a.kode||a.id)}));
+ const assetResult=listRecords_(user,'assets');
+ return (assetResult.records||[]).map(adaptAssetRecord_).filter(a=>/infocus|proyektor/i.test(a.nama)&&a.status!=='Dihapus').map(a=>({unitCode:a.kode||a.id,name:a.nama,qrValue:'SIMSPA-INFOCUS:'+String(a.kode||a.id)}));
 }
 function infocusSetup_(user){
  if(!['admin','pimpinan'].includes(String(user.role)))throw new Error('Hanya Admin/Pimpinan yang dapat menyiapkan QR.');
