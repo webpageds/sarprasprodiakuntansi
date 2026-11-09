@@ -1,17 +1,16 @@
 <!doctype html>
-<!-- SIM-SPA PWA install metadata -->
+<html lang="id">
+<head>
+<!-- SIAP PWA install metadata -->
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#0b1f3a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/svg+xml" href="./assets/app-icon.svg">
-
-<html lang="id">
-<head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#102b46"><meta name="description" content="Sistem Informasi Manajemen Sarana dan Prasarana Program Studi Akuntansi">
-<title>SIM-SPA | Sarana & Prasarana Akuntansi</title>
+<meta name="theme-color" content="#102b46"><meta name="description" content="Sistem Informasi Aset & Prasarana Program Studi Akuntansi">
+<title>SIAP | Aset & Prasarana Akuntansi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -196,15 +195,15 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
 </style><script>
 /* Isi URL /exec setelah deployment Apps Script. */
-window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
+window.SIAP_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
 </script>
 
 </head>
 <body>
 <!--
- SIM-SPA LOGIN HOTFIX:
+ SIAP LOGIN HOTFIX:
  The page always starts at the credential form. No role picker or stored session is restored.
- Backend authentication is not yet wired to data CRUD; configure SIMSPA_API_URL only after Apps Script endpoint is deployed.
+ Backend authentication is not yet wired to data CRUD; configure SIAP_API_URL only after Apps Script endpoint is deployed.
 -->
 
 <div id="loginScreen">
@@ -213,16 +212,16 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
    <div>
     <div class="login-brand"><div class="login-mark">SPA</div><div><b style="font:800 14px Manrope;display:block">SIM–SPA PRODI</b><small style="color:#b8d3dc">PROGRAM STUDI AKUNTANSI</small></div></div>
     <h1>Kelola Sarana<br>& Prasarana<br>Lebih Terarah.</h1>
-    <p>Sistem Informasi Manajemen Sarana dan Prasarana Program Studi Akuntansi untuk mendukung pengelolaan aset, fasilitas, dan layanan prodi.</p>
+    <p>Sistem Informasi Aset & Prasarana Program Studi Akuntansi untuk mendukung pengelolaan aset, fasilitas, dan layanan prodi.</p>
     <div class="login-points"><div class="login-point"><span>▣</span>Inventaris aset dan pemeliharaan terstruktur</div><div class="login-point"><span>⇄</span>Layanan peminjaman dan persetujuan</div><div class="login-point"><span>▧</span>Pelaporan dan pemantauan terintegrasi</div></div>
    </div>
-   <div class="login-copy">© 2026 SIM-SPA Prodi Akuntansi · Sistem Informasi Sarana & Prasarana</div>
+   <div class="login-copy">© 2026 SIAP Prodi Akuntansi · Sistem Informasi Sarana & Prasarana</div>
   </section>
   <section class="login-select">
    <div id="roleChooser">
     <div class="eyebrow">SELAMAT DATANG</div>
     <h2>Pilih akses masuk</h2>
-    <p>Pilih kategori pengguna SIM-SPA untuk melanjutkan.</p>
+    <p>Pilih kategori pengguna SIAP untuk melanjutkan.</p>
     <div class="role-grid">
      <button class="role-card" type="button" data-login-role="admin"><span class="role-icon">⚙</span><b>Admin Prodi</b><small>Pengelolaan sistem dan data sarpras</small></button>
      <button class="role-card" type="button" data-login-role="pimpinan"><span class="role-icon">▥</span><b>Pimpinan Prodi</b><small>Monitoring dan persetujuan</small></button>
@@ -233,7 +232,7 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
    </div>
    <div id="credentialPanel" hidden>
     <div class="eyebrow" id="credentialEyebrow">LOGIN PENGGUNA</div>
-    <h2 id="credentialTitle">Masuk ke SIM-SPA</h2>
+    <h2 id="credentialTitle">Masuk ke SIAP</h2>
     <p id="credentialDescription">Gunakan akun yang telah didaftarkan administrator.</p>
     <form id="loginForm" autocomplete="on">
      <div class="field"><label id="identifierLabel" for="loginIdentifier">Email</label><input id="loginIdentifier" name="username" type="text" autocomplete="username" placeholder="nama@kampus.ac.id" required></div>
@@ -281,12 +280,12 @@ async function stopQrScanner(){if(!activeQrScanner)return;const scanner=activeQr
 async function startInfocusScanner(inputId){try{openInfo('<h2>Scan QR Infocus</h2><p>Arahkan kamera belakang ke QR yang ditempel pada Infocus.</p><div id="infocusQrReader" style="width:100%;max-width:440px;margin:auto"></div><p class="muted">Izinkan akses kamera pada browser dan gunakan HTTPS.</p>');await loadScriptOnce('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js','Html5Qrcode');if(!document.getElementById('infocusQrReader'))throw new Error('Area kamera tidak ditemukan.');activeQrScanner=new Html5Qrcode('infocusQrReader');await activeQrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},async decoded=>{const input=document.getElementById(inputId);if(input)input.value=decoded;await stopQrScanner();closeModal();toast('QR berhasil terbaca.');},()=>{});}catch(e){await stopQrScanner();toast(e.message||'Kamera tidak dapat dibuka. Izinkan akses kamera dan gunakan HTTPS.');}}
 async function renderInfocusQrCards(){await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode');document.querySelectorAll('[data-infocus-qr]').forEach(el=>{el.innerHTML='';new QRCode(el,{text:el.dataset.infocusQr,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});});}
 function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script><script>
-/* SIM-SPA installable web app: no duplicate login/app code, opens this same site. */
+/* SIAP installable web app: no duplicate login/app code, opens this same site. */
 (function(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('./service-worker.js').catch(function(err){
-        console.warn('SIM-SPA offline/install support:', err);
+        console.warn('SIAP offline/install support:', err);
       });
     });
   }
@@ -300,7 +299,7 @@ function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-info
   window.addEventListener('appinstalled', function(){
     deferredInstallPrompt = null;
     var btn = document.getElementById('simspaInstallButton');
-    if (btn) btn.textContent = 'SIM-SPA sudah terpasang';
+    if (btn) btn.textContent = 'SIAP sudah terpasang';
   });
   window.simspaInstall = async function(){
     if (!deferredInstallPrompt) {
@@ -315,7 +314,7 @@ function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-info
     var panel=document.createElement('section');
     panel.id='simspaInstallPanel';
     panel.style.cssText='max-width:1080px;margin:16px auto;padding:0 16px;';
-    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIM-SPA di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIM-SPA.</span></div><button id="simspaInstallButton" type="button" style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
+    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIAP di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIAP.</span></div><button id="simspaInstallButton" type="button" style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
     var roleChooser=document.getElementById('roleChooser');
     if(roleChooser && roleChooser.parentNode) roleChooser.parentNode.insertBefore(panel,roleChooser);
     var btn=document.getElementById('simspaInstallButton');
@@ -343,14 +342,14 @@ async function apiCall(payload,token){
   frame.name='simspa_frame_'+nonce;
   frame.style.display='none';
   const form=document.createElement('form');
-  form.method='POST';form.action=window.SIMSPA_API_URL;form.target=frame.name;form.style.display='none';
+  form.method='POST';form.action=window.SIAP_API_URL;form.target=frame.name;form.style.display='none';
   const input=document.createElement('input');
   input.type='hidden';input.name='payload';input.value=JSON.stringify(body);form.appendChild(input);
   let timer;
   const cleanup=()=>{clearTimeout(timer);window.removeEventListener('message',onMessage);form.remove();frame.remove();};
   const onMessage=(event)=>{
    const data=event.data;
-   if(!data||data.type!=='SIMSPA_API_RESPONSE'||data.nonce!==nonce)return;
+   if(!data||data.type!=='SIAP_API_RESPONSE'||data.nonce!==nonce)return;
    // Apps Script replies from the hidden iframe; Safari/iOS may report
    // the iframe's origin differently, so validate the message nonce.
    cleanup();
@@ -485,7 +484,7 @@ case'mapping-load':return (async()=>{try{const r=await apiCall({action:'adminLis
 case'asset-assign':{const target=S.assets.find(x=>x.id===p);const select=Array.from(document.querySelectorAll('[data-map-owner]')).find(x=>x.getAttribute('data-map-owner')===p);if(!target||!select)return toast('Aset atau pilihan dosen tidak ditemukan');return (async()=>{try{const res=await apiCall({action:'adminAssignAssetOwner',assetId:p,userId:select.value},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));target.assignedToUserId=res.assignedToUserId||'';target.assignedToName=res.assignedToName||'';render();toast(res.assignedToName?'Aset berhasil ditautkan ke '+res.assignedToName:'Tautan aset dilepas')}catch(e){toast(e.message)}})();}
 case'users-load':return (async()=>{try{const r=await apiCall({action:'adminListUsers'},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));usersCache=r.users||[];render();toast('Daftar akun berhasil dimuat')}catch(e){toast(e.message)}})();
 case'users-reset':{const u=usersCache.find(x=>x.userId===p);if(!u)return toast('Akun tidak ditemukan');const first=window.prompt('Masukkan password sementara baru untuk '+u.name+' (minimal 12 karakter):');if(!first)return;if(first.length<12)return toast('Password minimal 12 karakter');const second=window.prompt('Ulangi password sementara:');if(first!==second)return toast('Konfirmasi password tidak sama');return (async()=>{try{await apiCall({action:'adminResetPassword',userId:u.userId,newPassword:first},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));toast('Password direset. Sampaikan secara pribadi kepada pengguna.');const r=await apiCall({action:'adminListUsers'},(JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token));usersCache=r.users||[];render()}catch(e){toast(e.message)}})();}
-case'infocus-setup':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusSetup'},token);window.infocusPoolStatus=r.pool||{};openInfo('<h2>QR Umum Infokus</h2><p>Satu QR ini digunakan untuk seluruh '+esc(r.pool.totalQuantity)+' unit. Tempelkan satu QR di area penyimpanan Infokus. QR yang sama dipakai saat peminjaman dan pengembalian.</p><div data-infocus-qr="SIMSPA-INFOCUS-POOL" data-name="QR Umum Infokus" data-code="POOL-INFOCUS" style="margin:16px auto;width:180px;min-height:180px"></div><p><b>Total:</b> '+r.pool.totalQuantity+' unit &nbsp; <b>Dipinjam:</b> '+r.pool.borrowedQuantity+' &nbsp; <b>Tersedia:</b> '+r.pool.availableQuantity+'</p><div class="actions"><button class="btn primary" data-action="infocus-print">Cetak QR Umum</button></div>');await renderInfocusQrCards();}catch(e){toast(e.message);}})();
+case'infocus-setup':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusSetup'},token);window.infocusPoolStatus=r.pool||{};openInfo('<h2>QR Umum Infokus</h2><p>Satu QR ini digunakan untuk seluruh '+esc(r.pool.totalQuantity)+' unit. Tempelkan satu QR di area penyimpanan Infokus. QR yang sama dipakai saat peminjaman dan pengembalian.</p><div data-infocus-qr="SIAP-INFOCUS-POOL" data-name="QR Umum Infokus" data-code="POOL-INFOCUS" style="margin:16px auto;width:180px;min-height:180px"></div><p><b>Total:</b> '+r.pool.totalQuantity+' unit &nbsp; <b>Dipinjam:</b> '+r.pool.borrowedQuantity+' &nbsp; <b>Tersedia:</b> '+r.pool.availableQuantity+'</p><div class="actions"><button class="btn primary" data-action="infocus-print">Cetak QR Umum</button></div>');await renderInfocusQrCards();}catch(e){toast(e.message);}})();
 case'infocus-checkout':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,room=document.getElementById('infocusRoom').value.trim(),qr=document.getElementById('infocusQr').value.trim(),quantity=Number(document.getElementById('infocusQuantity').value);if(!room||!qr)throw new Error('Isi kelas dan scan QR umum.');const result=await apiCall({action:'infocusCheckout',usageLocation:room,qrValue:qr,quantity},token);window.infocusPoolStatus=result.pool||window.infocusPoolStatus;const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil meminjam '+quantity+' unit. Sisa '+window.infocusPoolStatus.availableQuantity+' unit. Batas 24 jam.')}catch(e){toast(e.message)}})();
 case'infocus-return':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,file=document.getElementById('infocusPhoto_'+p).files[0],qr=document.getElementById('infocusReturnQr_'+p).value.trim();if(!file||!qr)throw new Error('Foto dan QR wajib.');const data=await compressInfocusPhoto(file,950000);await apiCall({action:'infocusReturn',loanId:p,qrValue:qr,photoData:data},token);const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil dikembalikan, foto tersimpan di Drive.')}catch(e){toast(e.message)}})();
 case'infocus-photo':return (async()=>{try{const token=JSON.parse(sessionStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusPhoto',loanId:p},token);openInfo('<h2>Foto kondisi</h2><img src="'+r.dataUrl+'" alt="Foto Infocus" style="max-width:100%;max-height:65vh">')}catch(e){toast(e.message)}})();
@@ -528,14 +527,14 @@ case'clean-issue':return openForm('Keluhan kebersihan',roomName(p),[{name:'ket',
 case'clean-fix':S.clean.forEach(c=>{if(c.room===p&&c.tipe==='keluhan')c.selesai=1});log('Keluhan kebersihan selesai: '+roomName(p));persist();return;
 case'export':return exportReport(p||'csv');
 }}
-function reportData(){let [headers,getRows]=reports[report];let rows=getRows().filter(r=>!query||r.join(' ').toLowerCase().includes(query.toLowerCase()));let safe=report.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return {headers,rows,title:report,filename:'laporan-sim-spa-'+safe+'-'+today()}}
+function reportData(){let [headers,getRows]=reports[report];let rows=getRows().filter(r=>!query||r.join(' ').toLowerCase().includes(query.toLowerCase()));let safe=report.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return {headers,rows,title:report,filename:'laporan-siap-'+safe+'-'+today()}}
 function downloadBlob(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function xmlEscape(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
 function exportReport(format){
  const {headers,rows,title,filename}=reportData();
  if(format==='csv'){let csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');downloadBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),filename+'.csv');toast('File CSV berhasil diunduh');return}
  if(format==='doc'){
-  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+xmlEscape(title)+'</title><style>body{font:12px Arial,sans-serif;color:#172b40}h1{font-size:20px}p{color:#64748b}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#eaf2f8}</style></head><body><h1>Laporan '+xmlEscape(title)+'</h1><p>SIM-SPA Program Studi Akuntansi · Dicetak '+today()+'</p><table><thead><tr>'+headers.map(h=>'<th>'+xmlEscape(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+xmlEscape(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></body></html>';
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+xmlEscape(title)+'</title><style>body{font:12px Arial,sans-serif;color:#172b40}h1{font-size:20px}p{color:#64748b}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#eaf2f8}</style></head><body><h1>Laporan '+xmlEscape(title)+'</h1><p>SIAP Program Studi Akuntansi · Dicetak '+today()+'</p><table><thead><tr>'+headers.map(h=>'<th>'+xmlEscape(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+xmlEscape(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></body></html>';
   downloadBlob(new Blob(['\ufeff',html],{type:'application/msword;charset=utf-8'}),filename+'.doc');toast('Dokumen Word berhasil diunduh');return
  }
  if(format==='xlsx'){
@@ -548,7 +547,7 @@ function exportReport(format){
 function printReport(savePdf=false){
  const {headers,rows,title}=reportData(),win=window.open('','_blank');
  if(!win){toast('Izinkan pop-up browser untuk mencetak laporan');return}
- const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan '+xmlEscape(title)+'</title><style>body{font:11px Arial,sans-serif;color:#1f2937;padding:24px}h1{font-size:20px;margin-bottom:4px}.meta{color:#64748b;margin-bottom:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#eaf2f8}tr{page-break-inside:avoid}@page{size:A4 landscape;margin:14mm}</style></head><body><h1>Laporan '+xmlEscape(title)+'</h1><div class="meta">SIM-SPA Program Studi Akuntansi · '+today()+' · '+rows.length+' data</div><table><thead><tr>'+headers.map(h=>'<th>'+xmlEscape(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+xmlEscape(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.focus();window.print()}<\/script></body></html>';
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan '+xmlEscape(title)+'</title><style>body{font:11px Arial,sans-serif;color:#1f2937;padding:24px}h1{font-size:20px;margin-bottom:4px}.meta{color:#64748b;margin-bottom:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#eaf2f8}tr{page-break-inside:avoid}@page{size:A4 landscape;margin:14mm}</style></head><body><h1>Laporan '+xmlEscape(title)+'</h1><div class="meta">SIAP Program Studi Akuntansi · '+today()+' · '+rows.length+' data</div><table><thead><tr>'+headers.map(h=>'<th>'+xmlEscape(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(v=>'<td>'+xmlEscape(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.focus();window.print()}<\/script></body></html>';
  win.document.open();win.document.write(html);win.document.close();
  if(savePdf)toast('Pada dialog cetak, pilih Simpan sebagai PDF')
  else toast('Pratinjau cetak berhasil dibuka')
@@ -612,7 +611,7 @@ function showLogin(message=''){
  if(err){err.textContent=message;err.style.display=message?'block':'none'}
  const form=document.getElementById('loginForm'); if(form) form.reset();
 }
-function logout(){try{sessionStorage.removeItem('simspaSession')}catch(e){}showLogin('Anda telah keluar dari SIM-SPA.')}
+function logout(){try{sessionStorage.removeItem('simspaSession')}catch(e){}showLogin('Anda telah keluar dari SIAP.')}
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const identifier=document.getElementById('loginIdentifier').value.trim();
