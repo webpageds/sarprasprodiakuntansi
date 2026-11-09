@@ -437,11 +437,19 @@ function syncRecords_(user,module,records) {
     // Admin/Pimpinan may replace the full module snapshot. Other roles may only upsert,
     // so a lecturer or facilities user cannot erase records created by other users.
     if (['admin','pimpinan'].includes(String(user.role))) {
-      for (let i=values.length-1;i>=1;i--) if (String(values[i][0])===String(module)) sh.deleteRow(i+1);
+      // Preserve dedicated Infocus transactions when the legacy Loans module
+      // replaces its normal snapshot from the frontend.
+      const preservedInfocus = String(module)==='loans'
+        ? values.slice(1).filter(row => String(row[0])==='loans' && (()=>{try{return JSON.parse(row[2]).type==='infocus';}catch(e){return false;}})())
+        : [];
+      for (let i=values.length-1;i>=1;i--) {
+        if (String(values[i][0])===String(module) &&
+            !(String(module)==='loans' && (()=>{try{return JSON.parse(values[i][2]).type==='infocus';}catch(e){return false;}})())) sh.deleteRow(i+1);
+      }
       const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
       if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
       log_(user,'Sinkronisasi',name,'',rows.length+' data disinkronkan');
-      return {ok:true,count:rows.length,mode:'replace'};
+      return {ok:true,count:rows.length,mode:'replace',preservedInfocus:preservedInfocus.length};
     }
     const current = sh.getDataRange().getValues();
     const index = new Map();
