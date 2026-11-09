@@ -278,25 +278,7 @@ function compressInfocusPhoto(file,maxBytes){return new Promise((resolve,reject)
 async function stopQrScanner(){if(!activeQrScanner)return;const scanner=activeQrScanner;activeQrScanner=null;try{await scanner.stop();await scanner.clear();}catch(e){}}
 async function startInfocusScanner(inputId){try{openInfo('<h2>Scan QR Infocus</h2><p>Arahkan kamera belakang ke QR yang ditempel pada Infocus.</p><div id="infocusQrReader" style="width:100%;max-width:440px;margin:auto"></div><p class="muted">Izinkan akses kamera pada browser dan gunakan HTTPS.</p>');await loadScriptOnce('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js','Html5Qrcode');if(!document.getElementById('infocusQrReader'))throw new Error('Area kamera tidak ditemukan.');activeQrScanner=new Html5Qrcode('infocusQrReader');await activeQrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},async decoded=>{const input=document.getElementById(inputId);if(input)input.value=decoded;await stopQrScanner();closeModal();toast('QR berhasil terbaca.');},()=>{});}catch(e){await stopQrScanner();toast(e.message||'Kamera tidak dapat dibuka. Izinkan akses kamera dan gunakan HTTPS.');}}
 async function renderInfocusQrCards(){await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode');document.querySelectorAll('[data-infocus-qr]').forEach(el=>{el.innerHTML='';new QRCode(el,{text:el.dataset.infocusQr,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});});}
-function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script>
-<script>
-(function(){
- var deferredPrompt=null;
- window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
- window.addEventListener('appinstalled',function(){var b=document.getElementById('siapInstallButton');if(b)b.textContent='SIAP terpasang';deferredPrompt=null;});
- var b=document.getElementById('siapInstallButton');
- if(b)b.addEventListener('click',function(){
-   if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;}).catch(function(){deferredPrompt=null;});return;}
-   var help=document.getElementById('siapInstallHelp');if(!help)return;
-   var ua=navigator.userAgent;
-   if(/iphone|ipad|ipod/i.test(ua))help.textContent='Safari: tekan Bagikan, lalu pilih Tambahkan ke Layar Utama.';
-   else if(/android/i.test(ua))help.textContent='Chrome: buka menu ⋮ lalu pilih Instal aplikasi atau Tambahkan ke layar utama.';
-   else help.textContent='Edge/Chrome: buka menu ⋯ lalu pilih Apps → Install this site as an app.';
-   help.style.display='block';
- });
-})();
-</script>
-</body></html>');win.document.close();}
+function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script></body></html>');win.document.close();}
 
 const today=()=>new Date().toISOString().slice(0,10),year=new Date().getFullYear(),id=()=>Math.random().toString(36).slice(2,9);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -617,6 +599,23 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  }catch(error){err.textContent=error.message||'Terjadi kesalahan saat login.';err.style.display='block'}
  finally{btn.disabled=false;btn.textContent='Masuk'}
 });
+
+
+var siapDeferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();siapDeferredInstallPrompt=e;});
+window.addEventListener('appinstalled',function(){var b=document.getElementById('siapInstallButton');if(b)b.textContent='SIAP terpasang';siapDeferredInstallPrompt=null;});
+(function(){
+ var b=document.getElementById('siapInstallButton');if(!b)return;
+ b.addEventListener('click',function(){
+  if(siapDeferredInstallPrompt){siapDeferredInstallPrompt.prompt();siapDeferredInstallPrompt.userChoice.then(function(){siapDeferredInstallPrompt=null;}).catch(function(){siapDeferredInstallPrompt=null;});return;}
+  var help=document.getElementById('siapInstallHelp');if(!help)return;
+  var ua=navigator.userAgent;
+  if(/iphone|ipad|ipod/i.test(ua))help.textContent='Safari: tekan Bagikan, lalu pilih Tambahkan ke Layar Utama.';
+  else if(/android/i.test(ua))help.textContent='Chrome: buka menu titik tiga lalu pilih Instal aplikasi atau Tambahkan ke layar utama.';
+  else help.textContent='Edge/Chrome: buka menu titik tiga lalu pilih Apps → Install this site as an app.';
+  help.style.display='block';
+ });
+})();
 
 showLogin();
 
