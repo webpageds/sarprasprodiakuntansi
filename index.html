@@ -315,9 +315,9 @@ function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-info
     var panel=document.createElement('section');
     panel.id='simspaInstallPanel';
     panel.style.cssText='max-width:1080px;margin:16px auto;padding:0 16px;';
-    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIM-SPA di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIM-SPA.</span></div><button id="simspaInstallButton" type="button" hidden style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
-    var login=document.getElementById('loginScreen');
-    if(login && login.parentNode) login.parentNode.insertBefore(panel,login.nextSibling);
+    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIM-SPA di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIM-SPA.</span></div><button id="simspaInstallButton" type="button" style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
+    var roleChooser=document.getElementById('roleChooser');
+    if(roleChooser && roleChooser.parentNode) roleChooser.parentNode.insertBefore(panel,roleChooser);
     var btn=document.getElementById('simspaInstallButton');
     if(btn) btn.addEventListener('click',window.simspaInstall);
   });
