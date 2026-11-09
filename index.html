@@ -1,4 +1,12 @@
 <!doctype html>
+<!-- SIM-SPA PWA install metadata -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0b1f3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="./assets/app-icon-192.png">
+
 <html lang="id">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -272,7 +280,50 @@ function compressInfocusPhoto(file,maxBytes){return new Promise((resolve,reject)
 async function stopQrScanner(){if(!activeQrScanner)return;const scanner=activeQrScanner;activeQrScanner=null;try{await scanner.stop();await scanner.clear();}catch(e){}}
 async function startInfocusScanner(inputId){try{openInfo('<h2>Scan QR Infocus</h2><p>Arahkan kamera belakang ke QR yang ditempel pada Infocus.</p><div id="infocusQrReader" style="width:100%;max-width:440px;margin:auto"></div><p class="muted">Izinkan akses kamera pada browser dan gunakan HTTPS.</p>');await loadScriptOnce('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js','Html5Qrcode');if(!document.getElementById('infocusQrReader'))throw new Error('Area kamera tidak ditemukan.');activeQrScanner=new Html5Qrcode('infocusQrReader');await activeQrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},async decoded=>{const input=document.getElementById(inputId);if(input)input.value=decoded;await stopQrScanner();closeModal();toast('QR berhasil terbaca.');},()=>{});}catch(e){await stopQrScanner();toast(e.message||'Kamera tidak dapat dibuka. Izinkan akses kamera dan gunakan HTTPS.');}}
 async function renderInfocusQrCards(){await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode');document.querySelectorAll('[data-infocus-qr]').forEach(el=>{el.innerHTML='';new QRCode(el,{text:el.dataset.infocusQr,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});});}
-function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script></body></html>');win.document.close();}
+function printInfocusQrs(){const cards=[...document.querySelectorAll('[data-infocus-qr]')].map(el=>{const canvas=el.querySelector('canvas'),img=el.querySelector('img');return {name:el.dataset.name||'Infocus',code:el.dataset.code||'',src:canvas?canvas.toDataURL('image/png'):(img?img.src:'')};});if(!cards.length)return toast('QR belum dibuat.');const win=window.open('','_blank');if(!win)return toast('Izinkan pop-up browser untuk mencetak QR.');win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Label QR Infocus</title><style>body{font:14px Arial;padding:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card{border:1px solid #aaa;border-radius:10px;padding:14px;text-align:center;break-inside:avoid}.card img{width:160px;height:160px;object-fit:contain}.code{font-size:12px;word-break:break-all}@page{size:A4;margin:12mm}</style></head><body><h1>QR Peminjaman Infocus</h1><div class="grid">'+cards.map(c=>'<div class="card"><h3>'+String(c.name).replace(/[&<>"]/g,'')+'</h3><img src="'+c.src+'"><p class="code">'+String(c.code).replace(/[&<>"]/g,'')+'</p></div>').join('')+'</div><script>window.onload=function(){window.print()}<\/script><script>
+/* SIM-SPA installable web app: no duplicate login/app code, opens this same site. */
+(function(){
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./service-worker.js').catch(function(err){
+        console.warn('SIM-SPA offline/install support:', err);
+      });
+    });
+  }
+  var deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(event){
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    var btn = document.getElementById('simspaInstallButton');
+    if (btn) btn.hidden = false;
+  });
+  window.addEventListener('appinstalled', function(){
+    deferredInstallPrompt = null;
+    var btn = document.getElementById('simspaInstallButton');
+    if (btn) btn.textContent = 'SIM-SPA sudah terpasang';
+  });
+  window.simspaInstall = async function(){
+    if (!deferredInstallPrompt) {
+      alert('Untuk memasang aplikasi: buka menu browser (⋮) lalu pilih Apps > Install this site as an app, atau Install page as app.');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var panel=document.createElement('section');
+    panel.id='simspaInstallPanel';
+    panel.style.cssText='max-width:1080px;margin:16px auto;padding:0 16px;';
+    panel.innerHTML='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid #d8e2eb;border-radius:14px;background:#fff;color:#17324d"><div><b style="display:block">Install SIM-SPA di Desktop</b><span style="font-size:13px;color:#526579">Pasang sebagai aplikasi desktop. Tampilan tetap terhubung ke website SIM-SPA.</span></div><button id="simspaInstallButton" type="button" hidden style="padding:10px 16px;border:0;border-radius:9px;background:#0b1f3a;color:#fff;font-weight:700;cursor:pointer">Install aplikasi</button></div>';
+    var login=document.getElementById('loginScreen');
+    if(login && login.parentNode) login.parentNode.insertBefore(panel,login.nextSibling);
+    var btn=document.getElementById('simspaInstallButton');
+    if(btn) btn.addEventListener('click',window.simspaInstall);
+  });
+})();
+</script>
+</body></html>');win.document.close();}
 
 const today=()=>new Date().toISOString().slice(0,10),year=new Date().getFullYear(),id=()=>Math.random().toString(36).slice(2,9);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
