@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#102b46"><meta name="description" content="Sistem Informasi Aset & Prasarana Program Studi Akuntansi">
+<meta name="theme-color" content="#102b46">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./assets/app-icon.svg"><meta name="description" content="Sistem Informasi Aset & Prasarana Program Studi Akuntansi">
 <title>SIAP | Aset & Prasarana Akuntansi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -224,8 +226,8 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
     <div class="login-hint">Akses menu ditentukan oleh role akun yang terdaftar.</div>
     <section id="siapInstallPanel" style="margin-top:22px;padding:14px;border:1px solid #dce8ef;border-radius:14px;background:#f6fafc;display:flex;align-items:center;gap:13px;flex-wrap:wrap">
      <div style="width:38px;height:38px;border-radius:11px;background:#e2f3ef;color:#087b70;display:grid;place-items:center;font-size:20px;flex:0 0 auto">↗</div>
-     <div style="flex:1;min-width:180px"><b style="display:block;color:#18344d;font:800 13px Manrope">Pasang SIAP di perangkat</b><span style="display:block;color:#64778a;font-size:11px;line-height:1.5;margin-top:3px">Akses dari desktop atau layar utama HP. Tetap terhubung ke website SIAP.</span></div>
-     <button id="siapInstallButton" type="button" style="padding:10px 15px;border:0;border-radius:9px;background:#0d9488;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Pasang SIAP</button>
+     <div style="flex:1;min-width:180px"><b style="display:block;color:#18344d;font:800 13px Manrope">Unduh Aplikasi SIAP</b><span style="display:block;color:#64778a;font-size:11px;line-height:1.5;margin-top:3px">Tambahkan SIAP ke desktop atau layar utama HP. Ikon aplikasi akan membuka website SIAP yang sama dan tetap terhubung ke data online.</span></div>
+     <button id="siapInstallButton" type="button" style="padding:10px 15px;border:0;border-radius:9px;background:#0d9488;color:#fff;font-weight:800;font-size:12px;cursor:pointer">Unduh SIAP</button>
      <div id="siapInstallHelp" style="display:none;flex-basis:100%;color:#64778a;font-size:11px;line-height:1.5"></div>
     </section>
    </div>
@@ -601,21 +603,72 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
 });
 
 
+/* SIAP install flow: install the website as an app; no separate APK/EXE or data copy. */
 var siapDeferredInstallPrompt=null;
-window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();siapDeferredInstallPrompt=e;});
-window.addEventListener('appinstalled',function(){var b=document.getElementById('siapInstallButton');if(b)b.textContent='SIAP terpasang';siapDeferredInstallPrompt=null;});
-(function(){
- var b=document.getElementById('siapInstallButton');if(!b)return;
- b.addEventListener('click',function(){
-  if(siapDeferredInstallPrompt){siapDeferredInstallPrompt.prompt();siapDeferredInstallPrompt.userChoice.then(function(){siapDeferredInstallPrompt=null;}).catch(function(){siapDeferredInstallPrompt=null;});return;}
-  var help=document.getElementById('siapInstallHelp');if(!help)return;
-  var ua=navigator.userAgent;
-  if(/iphone|ipad|ipod/i.test(ua))help.textContent='Safari: tekan Bagikan, lalu pilih Tambahkan ke Layar Utama.';
-  else if(/android/i.test(ua))help.textContent='Chrome: buka menu titik tiga lalu pilih Instal aplikasi atau Tambahkan ke layar utama.';
-  else help.textContent='Edge/Chrome: buka menu titik tiga lalu pilih Apps → Install this site as an app.';
-  help.style.display='block';
+var siapInstallButton=document.getElementById('siapInstallButton');
+var siapInstallHelp=document.getElementById('siapInstallHelp');
+var siapAlreadyInstalled=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+ window.addEventListener('load',function(){
+  navigator.serviceWorker.register('./service-worker.js').catch(function(error){console.warn('SIAP service worker:',error);});
  });
-})();
+}
+window.addEventListener('beforeinstallprompt',function(event){
+ event.preventDefault();
+ siapDeferredInstallPrompt=event;
+ if(siapInstallButton) siapInstallButton.textContent='Unduh SIAP';
+});
+window.addEventListener('appinstalled',function(){
+ siapAlreadyInstalled=true;
+ siapDeferredInstallPrompt=null;
+ if(siapInstallButton){siapInstallButton.textContent='SIAP Terpasang';siapInstallButton.disabled=true;}
+ if(siapInstallHelp) siapInstallHelp.textContent='SIAP berhasil ditambahkan ke perangkat. Buka melalui ikon SIAP.';
+});
+function showSIAPInstallHelp(message){
+ if(!siapInstallHelp)return;
+ siapInstallHelp.textContent=message;
+ siapInstallHelp.style.display='block';
+}
+if(siapInstallButton){
+ if(siapAlreadyInstalled){siapInstallButton.textContent='SIAP Terpasang';siapInstallButton.disabled=true;}
+ siapInstallButton.addEventListener('click',async function(){
+  if(siapAlreadyInstalled){
+   showSIAPInstallHelp('SIAP sudah terpasang. Buka aplikasi SIAP dari desktop atau layar utama perangkat.');
+   return;
+  }
+  if(siapDeferredInstallPrompt){
+   try{
+    siapDeferredInstallPrompt.prompt();
+    var choice=await siapDeferredInstallPrompt.userChoice;
+    siapDeferredInstallPrompt=null;
+    if(choice && choice.outcome==='accepted'){
+     siapInstallButton.textContent='Menyiapkan SIAP...';
+     showSIAPInstallHelp('Permintaan instalasi diterima. Ikuti konfirmasi dari browser sampai selesai.');
+    }else{
+     showSIAPInstallHelp('Instalasi belum dilanjutkan. Tekan Unduh SIAP lagi untuk mencoba kembali.');
+    }
+   }catch(error){console.warn('SIAP install prompt:',error);showSIAPInstallHelp('Browser tidak dapat membuka instalasi otomatis. Gunakan petunjuk menu browser di bawah.');}
+   return;
+  }
+  var ua=navigator.userAgent||'';
+  var isIOS=/iphone|ipad|ipod/i.test(ua);
+  var isAndroid=/android/i.test(ua);
+  var isEdge=/edg\//i.test(ua);
+  var isSafari=/safari/i.test(ua)&&!/chrome|chromium|crios|edg\//i.test(ua);
+  if(isIOS){
+   showSIAPInstallHelp('iPhone/iPad: buka halaman ini di Safari, tekan tombol Bagikan, pilih “Tambahkan ke Layar Utama”, lalu tekan Tambahkan.');
+  }else if(isAndroid){
+   showSIAPInstallHelp('Android: buka halaman ini di Chrome, tekan menu ⋮, pilih “Instal aplikasi” atau “Tambahkan ke layar utama”, lalu konfirmasi.');
+  }else if(isEdge){
+   showSIAPInstallHelp('Laptop/PC Microsoft Edge: tekan menu ⋯, pilih Aplikasi → Instal situs ini sebagai aplikasi, lalu klik Instal. Ikon SIAP akan muncul di aplikasi/desktop sesuai pilihan Windows.');
+  }else if(isSafari){
+   showSIAPInstallHelp('Mac: buka halaman ini di Safari, pilih File → Add to Dock untuk menambahkan SIAP sebagai aplikasi web.');
+  }else{
+   showSIAPInstallHelp('Laptop/PC Chrome: tekan menu ⋮, pilih Cast, save and share/Save and share → Install page as app atau Instal SIAP, lalu konfirmasi. Jika menu tidak muncul, coba buka website ini di Google Chrome atau Microsoft Edge terbaru.');
+  }
+ });
+}
 
 showLogin();
 
