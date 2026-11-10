@@ -51,6 +51,8 @@ function doPost(e) {
     else if (action === 'adminAssignAssetOwner') result = adminAssignAssetOwner_(authenticate_(body.token),body);
     else if (action === 'infocusSetup') result = infocusSetup_(authenticate_(body.token));
     else if (action === 'infocusStatus') result = infocusPoolStatus_(authenticate_(body.token));
+    else if (action === 'infocusScan') result = infocusScan_(authenticate_(body.token),body);
+    else if (action === 'infocusScans') result = infocusScans_(authenticate_(body.token));
     else if (action === 'infocusCheckout') result = infocusCheckout_(authenticate_(body.token),body);
     else if (action === 'infocusReturn') result = infocusReturn_(authenticate_(body.token),body);
     else if (action === 'infocusPhoto') result = infocusPhoto_(authenticate_(body.token),body);
@@ -552,103 +554,15 @@ function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)
 const INFOCUS_DRIVE_FOLDER_ID = '19mKbMROWNqNILJaMXEAcHQ7OG1u63dOR';
 const INFOCUS_POOL_QR = 'SIMSPA-INFOCUS-POOL';
 const INFOCUS_POOL_CODE = 'POOL-INFOCUS';
-
-function infocusRows_(){
- const v=sheet_('AppData').getDataRange().getValues();
- return v.length<2?[]:v.slice(1).map((r,i)=>{
-  let rec=null;try{rec=JSON.parse(r[2])}catch(e){}
-  return {row:i+2,module:String(r[0]),id:String(r[1]),record:rec};
- }).filter(x=>x.module==='loans'&&x.record&&x.record.type==='infocus');
-}
-function infocusSave_(user,record){
- const sh=sheet_('AppData'),v=sh.getDataRange().getValues(),id=String(record.id);
- const i=v.findIndex((r,n)=>n>0&&String(r[0])==='loans'&&String(r[1])===id);
- const row=['loans',id,JSON.stringify(record),new Date().toISOString(),user.userId];
- if(i>0)sh.getRange(i+1,1,1,5).setValues([row]);else sh.appendRow(row);
-}
-function infocusPoolStatus_(user){
- if(!['admin','pimpinan','dosen'].includes(String(user.role)))throw new Error('Akses ditolak.');
- const assetResult=listRecords_(user,'assets');
- const assets=(assetResult.records||[]).map(adaptAssetRecord_)
-  .filter(a=>/infocus|infokus|proyektor/i.test(a.nama)&&a.status!=='Dihapus');
- const totalQuantity=assets.reduce((sum,a)=>sum+Math.max(0,Number(a.jumlah)||0),0);
- const activeLoans=infocusRows_().filter(x=>!x.record.returnedAt);
- const borrowedQuantity=activeLoans.reduce((sum,x)=>sum+Math.max(1,Number(x.record.quantity)||1),0);
- return {
-  ok:true,
-  name:assets.length?assets.map(a=>a.nama).filter((v,i,a)=>a.indexOf(v)===i).join(' / '):'Infokus',
-  unitCode:INFOCUS_POOL_CODE,
-  qrValue:INFOCUS_POOL_QR,
-  assetCount:assets.length,
-  totalQuantity,
-  borrowedQuantity,
-  availableQuantity:Math.max(0,totalQuantity-borrowedQuantity),
-  activeTransactions:activeLoans.length
- };
-}
-function infocusSetup_(user){
- if(!['admin','pimpinan'].includes(String(user.role)))throw new Error('Hanya Admin/Pimpinan yang dapat menyiapkan QR.');
- const status=infocusPoolStatus_(user);
- if(status.totalQuantity<=0)throw new Error('Belum ada jumlah aset Infokus/Infocus/Proyektor yang aktif di inventaris.');
- return {ok:true,pool:status};
-}
-function infocusCheckout_(user,body){
- if(String(user.role)!=='dosen')throw new Error('Peminjaman Infocus hanya dapat dilakukan melalui akun dosen.');
- const qr=String(body.qrValue||'').trim(),loc=String(body.usageLocation||'').trim();
- const quantity=Math.floor(Number(body.quantity));
- if(!qr||!loc)throw new Error('QR umum dan ruang/kelas wajib diisi.');
- if(qr!==INFOCUS_POOL_QR)throw new Error('QR Infokus umum tidak cocok. Gunakan satu QR pool yang disediakan Admin.');
- if(!Number.isFinite(quantity)||quantity<1)throw new Error('Jumlah Infokus yang dipinjam minimal 1 unit.');
- const lock=LockService.getScriptLock();lock.waitLock(10000);
- try{
-  const status=infocusPoolStatus_(user);
-  if(quantity>status.availableQuantity)throw new Error('Stok Infokus tersedia hanya '+status.availableQuantity+' unit.');
-  const now=new Date(),due=new Date(now.getTime()+86400000);
-  const record={
-   id:Utilities.getUuid(),type:'infocus',unitCode:INFOCUS_POOL_CODE,unitName:status.name,
-   qrValue:INFOCUS_POOL_QR,quantity,
-   borrowerUserId:user.userId,createdByUserId:user.userId,peminjam:user.name,
-   usageLocation:loc,borrowedAt:now.toISOString(),dueAt:due.toISOString(),
-   returnedAt:'',status:'Dipinjam',returnPhotoFileId:''
-  };
-  infocusSave_(user,record);
-  log_(user,'Meminjam Infokus','Loans',record.id,quantity+' unit · '+loc);
-  const updated=infocusPoolStatus_(user);
-  return {ok:true,loan:record,pool:updated};
- }finally{lock.releaseLock()}
-}
-function infocusReturn_(user,body){
- if(String(user.role)!=='dosen')throw new Error('Pengembalian harus melalui akun dosen peminjam.');
- const loanId=String(body.loanId||''),qr=String(body.qrValue||'').trim(),photo=String(body.photoData||'');
- if(!loanId||!qr||!photo)throw new Error('ID transaksi, QR umum, dan foto wajib tersedia.');
- if(!/^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>1500000)throw new Error('Foto tidak valid atau terlalu besar (maksimal sekitar 1 MB).');
- const lock=LockService.getScriptLock();lock.waitLock(10000);
- try{
-  const row=infocusRows_().find(x=>x.id===loanId);
-  if(!row)throw new Error('Transaksi Infocus tidak ditemukan.');
-  const loan=row.record;
-  if(String(loan.borrowerUserId)!==String(user.userId))throw new Error('Kamu hanya dapat mengembalikan Infokus milikmu.');
-  if(loan.returnedAt)throw new Error('Infokus sudah dikembalikan.');
-  const expectedQr=String(loan.qrValue||INFOCUS_POOL_QR);
-  const isLegacyQr=loan.unitCode!==INFOCUS_POOL_CODE && (qr==='SIMSPA-INFOCUS:'+String(loan.unitCode)||qr===String(loan.unitCode));
-  if(qr!==INFOCUS_POOL_QR&&!isLegacyQr)throw new Error('QR umum tidak cocok. Gunakan QR Infokus yang sama.');
-  const parts=photo.split(','),mime=photo.slice(5,photo.indexOf(';')),bytes=Utilities.base64Decode(parts[1]);
-  const file=DriveApp.getFolderById(INFOCUS_DRIVE_FOLDER_ID).createFile(Utilities.newBlob(bytes,mime,'Infokus-'+loan.id+'-'+Date.now()+'.jpg'));
-  const now=new Date(),elapsed=Math.max(0,Math.round((now.getTime()-Date.parse(loan.borrowedAt))/60000));
-  loan.returnedAt=now.toISOString();loan.durationMinutes=elapsed;
-  loan.overdue=now.getTime()>Date.parse(loan.dueAt);
-  loan.status=loan.overdue?'Terlambat - Dikembalikan':'Dikembalikan';
-  loan.returnPhotoFileId=file.getId();
-  infocusSave_(user,loan);
-  log_(user,'Mengembalikan Infokus','Loans',loan.id,'Jumlah '+(Number(loan.quantity)||1)+' unit; durasi '+elapsed+' menit; '+loan.status);
-  return {ok:true,loan:loan,pool:infocusPoolStatus_(user)};
- }finally{lock.releaseLock()}
-}
-function infocusPhoto_(user,body){
- const row=infocusRows_().find(x=>x.id===String(body.loanId||''));
- if(!row)throw new Error('Transaksi tidak ditemukan.');
- if(!['admin','pimpinan'].includes(String(user.role))&&String(row.record.borrowerUserId)!==String(user.userId))throw new Error('Akses foto ditolak.');
- if(!row.record.returnPhotoFileId)throw new Error('Foto pengembalian belum tersedia.');
- const blob=DriveApp.getFileById(row.record.returnPhotoFileId).getBlob();
- return {ok:true,dataUrl:'data:'+blob.getContentType()+';base64,'+Utilities.base64Encode(blob.getBytes())};
-}
+const INFOCUS_UNIT_PREFIX = 'SIMSPA-INFOCUS:';
+const INFOCUS_UNIT_CODES = Array.from({length:12},(_,i)=>'INF-'+String(i+1).padStart(3,'0'));
+function infocusRows_(){const v=sheet_('AppData').getDataRange().getValues();return v.length<2?[]:v.slice(1).map((r,i)=>{let rec=null;try{rec=JSON.parse(r[2])}catch(e){}return {row:i+2,module:String(r[0]),id:String(r[1]),record:rec};}).filter(x=>x.module==='loans'&&x.record&&x.record.type==='infocus');}
+function infocusSave_(user,record){const sh=sheet_('AppData'),v=sh.getDataRange().getValues(),id=String(record.id),i=v.findIndex((r,n)=>n>0&&String(r[0])==='loans'&&String(r[1])===id),row=['loans',id,JSON.stringify(record),new Date().toISOString(),user.userId];if(i>0)sh.getRange(i+1,1,1,5).setValues([row]);else sh.appendRow(row);}
+function infocusUnits_(){const active=new Map();infocusRows_().forEach(x=>{const r=x.record||{},c=String(r.unitCode||'');if(/^INF-\d{3}$/.test(c)&&!r.returnedAt)active.set(c,r);});return INFOCUS_UNIT_CODES.map((code,i)=>({code,name:'Infocus '+String(i+1).padStart(2,'0'),qrValue:INFOCUS_UNIT_PREFIX+code,status:active.has(code)?'Dipinjam':'Tersedia',activeLoan:active.get(code)||null}));}
+function infocusPoolStatus_(user){if(!['admin','pimpinan','dosen'].includes(String(user.role)))throw new Error('Akses ditolak.');const units=infocusUnits_();return {ok:true,name:'12 Unit Infocus',unitCode:INFOCUS_POOL_CODE,qrValue:INFOCUS_POOL_QR,assetCount:12,totalQuantity:12,borrowedQuantity:units.filter(x=>x.status==='Dipinjam').length,availableQuantity:units.filter(x=>x.status==='Tersedia').length,activeTransactions:infocusRows_().filter(x=>!x.record.returnedAt).length,units};}
+function infocusSetup_(user){if(!['admin','pimpinan'].includes(String(user.role)))throw new Error('Hanya Admin/Pimpinan yang dapat menyiapkan QR.');return {ok:true,pool:infocusPoolStatus_(user)};}
+function infocusScan_(user,body){if(!['admin','pimpinan','dosen'].includes(String(user.role)))throw new Error('Akses scan ditolak.');const code=String(body.unitCode||'').trim().toUpperCase();if(!INFOCUS_UNIT_CODES.includes(code))throw new Error('QR unit Infocus tidak dikenal.');const geo=body.location||{},lat=Number(geo.latitude),lng=Number(geo.longitude),hasGeo=Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180,now=new Date().toISOString();const event={id:Utilities.getUuid(),type:'infocus_scan',unitCode:code,actorUserId:user.userId,actorName:user.name,actorRole:user.role,scannedAt:now,scanType:String(body.scanType||'Pemeriksaan QR').slice(0,60),locationLabel:String(body.locationLabel||'').slice(0,180),latitude:hasGeo?lat:null,longitude:hasGeo?lng:null,accuracyMeters:Number.isFinite(Number(geo.accuracy))?Number(geo.accuracy):null,geolocationGranted:hasGeo};sheet_('AppData').appendRow(['infocus_scans',event.id,JSON.stringify(event),now,user.userId]);log_(user,'Scan QR Infocus','InfocusScans',event.id,code+' · '+(hasGeo?'GPS tersimpan':'GPS tidak tersedia'));return {ok:true,event};}
+function infocusCheckout_(user,body){if(String(user.role)!=='dosen')throw new Error('Peminjaman Infocus hanya dapat dilakukan melalui akun dosen.');const code=String(body.unitCode||'').trim().toUpperCase(),qr=String(body.qrValue||'').trim(),loc=String(body.usageLocation||'').trim(),geo=body.location||{};if(!INFOCUS_UNIT_CODES.includes(code)||qr!==INFOCUS_UNIT_PREFIX+code)throw new Error('QR unit tidak cocok. Scan QR fisik INF-001 sampai INF-012.');if(!loc)throw new Error('Kelas/ruang penggunaan wajib diisi.');const lock=LockService.getScriptLock();lock.waitLock(10000);try{const unit=infocusUnits_().find(x=>x.code===code);if(!unit)throw new Error('Unit Infocus tidak ditemukan.');if(unit.status==='Dipinjam')throw new Error(code+' sedang dipinjam.');const now=new Date(),due=new Date(now.getTime()+86400000),lat=Number(geo.latitude),lng=Number(geo.longitude),hasGeo=Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;const record={id:Utilities.getUuid(),type:'infocus',unitCode:code,unitName:unit.name,qrValue:qr,quantity:1,borrowerUserId:user.userId,createdByUserId:user.userId,peminjam:user.name,usageLocation:loc,borrowedAt:now.toISOString(),dueAt:due.toISOString(),checkoutLocation:hasGeo?{latitude:lat,longitude:lng,accuracy:Number(geo.accuracy)||null}:null,returnedAt:'',status:'Dipinjam',returnPhotoFileId:''};infocusSave_(user,record);log_(user,'Meminjam Infocus','Loans',record.id,code+' · '+loc);return {ok:true,loan:record,pool:infocusPoolStatus_(user)};}finally{lock.releaseLock();}}
+function infocusReturn_(user,body){if(String(user.role)!=='dosen')throw new Error('Pengembalian harus melalui akun dosen peminjam.');const loanId=String(body.loanId||''),code=String(body.unitCode||'').trim().toUpperCase(),qr=String(body.qrValue||'').trim(),photo=String(body.photoData||''),geo=body.location||{};if(!loanId||!qr||!photo)throw new Error('Scan QR unit dan foto kondisi wajib tersedia.');if(!/^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)||photo.length>1500000)throw new Error('Foto tidak valid atau terlalu besar.');const lock=LockService.getScriptLock();lock.waitLock(10000);try{const row=infocusRows_().find(x=>x.id===loanId);if(!row)throw new Error('Transaksi Infocus tidak ditemukan.');const loan=row.record;if(String(loan.borrowerUserId)!==String(user.userId))throw new Error('Kamu hanya dapat mengembalikan Infocus milikmu.');if(loan.returnedAt)throw new Error('Infocus sudah dikembalikan.');if(code!==String(loan.unitCode)||qr!==INFOCUS_UNIT_PREFIX+code)throw new Error('QR yang dipindai bukan unit yang sedang dipinjam.');const parts=photo.split(','),mime=photo.slice(5,photo.indexOf(';')),bytes=Utilities.base64Decode(parts[1]),file=DriveApp.getFolderById(INFOCUS_DRIVE_FOLDER_ID).createFile(Utilities.newBlob(bytes,mime,'Infocus-'+code+'-'+loan.id+'-'+Date.now()+'.jpg'));const now=new Date(),elapsed=Math.max(0,Math.round((now.getTime()-Date.parse(loan.borrowedAt))/60000)),lat=Number(geo.latitude),lng=Number(geo.longitude),hasGeo=Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=90;loan.returnedAt=now.toISOString();loan.durationMinutes=elapsed;loan.overdue=now.getTime()>Date.parse(loan.dueAt);loan.status=loan.overdue?'Terlambat - Dikembalikan':'Dikembalikan';loan.returnPhotoFileId=file.getId();loan.returnLocation=hasGeo?{latitude:lat,longitude:lng,accuracy:Number(geo.accuracy)||null}:null;infocusSave_(user,loan);log_(user,'Mengembalikan Infocus','Loans',loan.id,code+' · '+loan.status);return {ok:true,loan:loan,pool:infocusPoolStatus_(user)};}finally{lock.releaseLock();}}
+function infocusPhoto_(user,body){const row=infocusRows_().find(x=>x.id===String(body.loanId||''));if(!row)throw new Error('Transaksi tidak ditemukan.');if(!['admin','pimpinan'].includes(String(user.role))&&String(row.record.borrowerUserId)!==String(user.userId))throw new Error('Akses foto ditolak.');if(!row.record.returnPhotoFileId)throw new Error('Foto pengembalian belum tersedia.');const blob=DriveApp.getFileById(row.record.returnPhotoFileId).getBlob();return {ok:true,dataUrl:'data:'+blob.getContentType()+';base64,'+Utilities.base64Encode(blob.getBytes())};}
+function infocusScans_(user){if(!['admin','pimpinan'].includes(String(user.role)))throw new Error('Hanya Admin/Pimpinan dapat melihat riwayat scan.');const v=sheet_('AppData').getDataRange().getValues(),events=v.length<2?[]:v.slice(1).filter(r=>String(r[0])==='infocus_scans').map(r=>{try{return JSON.parse(r[2])}catch(e){return null}}).filter(Boolean).sort((a,b)=>String(b.scannedAt).localeCompare(String(a.scannedAt)));return {ok:true,events};}
