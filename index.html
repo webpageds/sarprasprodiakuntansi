@@ -181,6 +181,18 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+/* Global busy guard: stop repeated submissions and show a blocking wait state */
+#siapBusyOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(9,27,45,.42);backdrop-filter:blur(3px);padding:20px}
+#siapBusyOverlay.is-active{display:flex}
+#siapBusyOverlay .busy-card{min-width:230px;max-width:90vw;background:#fff;border:1px solid #dce6ee;border-radius:18px;padding:22px 26px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.2);color:#17324b}
+#siapBusyOverlay .busy-spinner{width:34px;height:34px;border:4px solid #dce9ef;border-top-color:#0d9488;border-radius:50%;margin:0 auto 13px;animation:siapSpin .8s linear infinite}
+#siapBusyOverlay .busy-title{font-weight:800;font-size:15px}
+#siapBusyOverlay .busy-sub{font-size:12px;color:#64778a;margin-top:5px}
+@keyframes siapSpin{to{transform:rotate(360deg)}}
+body.siap-busy{overflow:hidden}
+body.siap-busy #appShell{pointer-events:none;user-select:none}
+body.siap-busy #siapBusyOverlay{pointer-events:auto}
+button.is-loading,[data-action].is-loading{opacity:.65!important;cursor:wait!important;pointer-events:none!important;filter:saturate(.7)}
 /* Real account login refresh */
 #loginForm{margin-top:18px}
 #loginForm .field{margin:0 0 15px}
@@ -195,6 +207,8 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
 
 </head>
 <body>
+<div id="siapBusyOverlay" aria-live="assertive" aria-busy="true"><div class="busy-card"><div class="busy-spinner"></div><div class="busy-title" id="siapBusyTitle">Sedang memproses...</div><div class="busy-sub">Mohon tunggu, jangan tekan tombol lain.</div></div></div>
+
 <!--
  SIAP LOGIN HOTFIX:
  The page always starts at the credential form. No role picker or stored session is restored.
@@ -296,8 +310,17 @@ function seed(){let rooms=[['Ruang Prodi','Kantor'],['Ruang Dosen','Kantor'],['L
 const make=(i,kode,nama,kat,ruang,kondisi,thn,nilai,umur,pj)=>({id:'a'+i,kode,nama,kat,ruang,kondisi,status:'Aktif',thn,nilai,umur,sumber:'Pembelian',sn:'',pj});
 return{rooms,assets:[make(1,'PRD-TI-2023-001','Laptop Dosen Lenovo','TI','r2','Baik',2023,9500000,4,'Dr. Sari'),make(2,'PRD-TI-2022-002','PC Lab Dell (1)','TI','r3','Rusak Ringan',2022,8000000,5,'Ir. Budi'),make(3,'PRD-TI-2022-003','PC Lab Dell (2)','TI','r3','Baik',2022,8000000,5,'Ir. Budi'),make(4,'PRD-TI-2021-004','Proyektor Epson','TI','r4','Rusak Berat',2021,6500000,5,'Admin Prodi'),make(5,'PRD-PER-2020-005','Meja Dosen','Perabot','r2','Baik',2020,1800000,8,'Dr. Sari'),make(6,'PRD-PEN-2021-006','AC Panasonic 1 PK','Penunjang','r1','Rusak Sedang',2021,4200000,8,'Admin Prodi'),make(7,'PRD-KAN-2023-007','Printer Canon','Kantor','r1','Baik',2023,2300000,5,'Admin Prodi')],stock:[{id:'s1',nama:'Kertas HVS A4',kat:'ATK',satuan:'rim',stok:12,min:5,lok:'Lemari ATK'},{id:'s2',nama:'Toner Printer',kat:'Habis Pakai TI',satuan:'pcs',stok:2,min:2,lok:'Lemari ATK'},{id:'s3',nama:'Sabun Cair',kat:'Kebersihan',satuan:'botol',stok:6,min:3,lok:'Gudang'}],tx:[],loans:[{id:'l1',asset:'a1',peminjam:'Dr. Sari',tgl:today(),kembali:today(),perlu:'Seminar',status:'Diajukan'}],repairs:[{id:'p1',asset:'a2',rusak:'Monitor berkedip',tgl:today(),pelapor:'Ir. Budi',tindakan:'',status:'Dilaporkan'}],mutasi:[],hapus:[],clean:[],log:[]}}
 function emptyState(){return {rooms:[],assets:[],stock:[],tx:[],loans:[],repairs:[],mutasi:[],hapus:[],clean:[],log:[],proc:[]};}
+let siapRequestDepth=0;
+function setSiapBusy(active,label){
+ const overlay=document.getElementById('siapBusyOverlay');
+ if(!overlay)return;
+ if(active){siapRequestDepth++;overlay.classList.add('is-active');document.body.classList.add('siap-busy');const title=document.getElementById('siapBusyTitle');if(title)title.textContent=label||'Sedang memproses...';}
+ else{siapRequestDepth=Math.max(0,siapRequestDepth-1);if(siapRequestDepth===0){overlay.classList.remove('is-active');document.body.classList.remove('siap-busy');}}
+}
 async function apiCall(payload,token){
  const body=Object.assign({},payload,token?{token}:{});
+ const actionLabel={login:'Memeriksa akun...',infocusCheckout:'Menyimpan peminjaman...',infocusReturn:'Memproses pengembalian...',infocusSetup:'Menyiapkan QR...',infocusScan:'Mencatat scan QR...',sync:'Menyimpan perubahan...',save:'Menyimpan data...',remove:'Menghapus data...',adminResetPassword:'Memperbarui password...',adminAssignAssetOwner:'Memperbarui penanggung jawab...',changePassword:'Memperbarui password...'}[body.action]||'Sedang memproses permintaan...';
+ setSiapBusy(true,actionLabel);
  return new Promise((resolve,reject)=>{
   const nonce='simspa_'+Date.now()+'_'+Math.random().toString(36).slice(2);
   body._nonce=nonce;
@@ -327,7 +350,7 @@ async function apiCall(payload,token){
   timer=setTimeout(()=>{cleanup();reject(new Error('Aplikasi belum menerima balasan dari Apps Script. Coba buka ulang halaman dan periksa koneksi internet. Jika masih terjadi, admin perlu memeriksa deployment Apps Script.'));},30000);
   document.body.append(frame,form);
   form.submit();
- });
+ }).finally(()=>setSiapBusy(false));
 }
 async function loadRemoteState(token){
  const modules=currentUser.role==='admin'||currentUser.role==='pimpinan'
@@ -442,7 +465,7 @@ dash(){
  log(){return pageHead('Log Aktivitas','Jejak perubahan dan tindakan yang tercatat di perangkat ini.')+`<section class="panel">${table(['Waktu','Peran','Aktivitas','Referensi'],S.log.slice(0,150).map(l=>[esc(l.t),esc(l.r),esc(l.m),esc(l.a||'—')]))}</section>`}
 };
 function options(items,selected=''){return `<option value="">${items.length?'Pilih salah satu...':'Belum ada pilihan tersedia'}</option>`+items.map(o=>{let val=Array.isArray(o)?o[0]:o,txt=Array.isArray(o)?o[1]:o;return `<option value="${esc(val)}" ${String(val)===String(selected)?'selected':''}>${esc(txt)}</option>`}).join('')}
-function openForm(title,description,fields,onSave){let html=`<h2>${title}</h2><p>${description||'Lengkapi informasi berikut dengan benar.'}</p><form id="dataForm"><div class="formgrid">${fields.map(f=>`<div class="field ${f.full?'full':''}"><label>${f.label}${f.required===false?'':' *'}</label>${f.type==='select'?`<select name="${f.name}" ${f.required===false?'':'required'}>${options(f.options||[],f.value)}</select>`:f.type==='textarea'?`<textarea name="${f.name}" rows="3" ${f.required===false?'':'required'}>${esc(f.value||'')}</textarea>`:`<input name="${f.name}" type="${f.type||'text'}" value="${esc(f.value??'')}" ${f.required===false?'':'required'} ${f.min!==undefined?`min="${f.min}"`:''} ${f.step?`step="${f.step}"`:''}>`}</div>`).join('')}</div><div class="modalfoot"><button type="button" class="btn" data-action="modal-close">Batal</button><button class="btn primary" type="submit">Simpan data</button></div></form>`;document.getElementById('modal').innerHTML=html;document.getElementById('modalback').hidden=false;document.getElementById('dataForm').onsubmit=e=>{e.preventDefault();let d=Object.fromEntries(new FormData(e.target));onSave(d);closeModal();persist();toast('Data berhasil disimpan')}}
+function openForm(title,description,fields,onSave){let html=`<h2>${title}</h2><p>${description||'Lengkapi informasi berikut dengan benar.'}</p><form id="dataForm"><div class="formgrid">${fields.map(f=>`<div class="field ${f.full?'full':''}"><label>${f.label}${f.required===false?'':' *'}</label>${f.type==='select'?`<select name="${f.name}" ${f.required===false?'':'required'}>${options(f.options||[],f.value)}</select>`:f.type==='textarea'?`<textarea name="${f.name}" rows="3" ${f.required===false?'':'required'}>${esc(f.value||'')}</textarea>`:`<input name="${f.name}" type="${f.type||'text'}" value="${esc(f.value??'')}" ${f.required===false?'':'required'} ${f.min!==undefined?`min="${f.min}"`:''} ${f.step?`step="${f.step}"`:''}>`}</div>`).join('')}</div><div class="modalfoot"><button type="button" class="btn" data-action="modal-close">Batal</button><button class="btn primary" type="submit">Simpan data</button></div></form>`;document.getElementById('modal').innerHTML=html;document.getElementById('modalback').hidden=false;document.getElementById('dataForm').onsubmit=e=>{e.preventDefault();const form=e.target;if(form.dataset.siapSubmitting==='1')return;form.dataset.siapSubmitting='1';const submit=form.querySelector('button[type=submit]');if(submit){submit.disabled=true;submit.textContent='Menyimpan...'}setSiapBusy(true,'Menyimpan data...');try{let d=Object.fromEntries(new FormData(form));onSave(d);closeModal();persist();toast('Data berhasil disimpan')}catch(err){form.dataset.siapSubmitting='0';if(submit){submit.disabled=false;submit.textContent='Simpan data'}setSiapBusy(false);toast(err.message||'Gagal menyimpan data')}}}
 function openInfo(html){document.getElementById('modal').innerHTML=html+`<div class="modalfoot"><button class="btn" data-action="modal-close">Tutup</button></div>`;document.getElementById('modalback').hidden=false}
 function closeModal(){stopQrScanner();document.getElementById('modalback').hidden=true}
 function act(key){let [t,p,ref]=key.split('|'),a=asset(p);switch(t){
@@ -538,7 +561,32 @@ function render(){
  document.getElementById('avatar').textContent=ROLES[role][0];
  document.getElementById('activeRoleLabel').textContent=ROLES[role];
 }
-document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if(b)act(b.dataset.action)});
+let siapActionInFlight=new Set();
+const siapBusyActions=new Set(['infocus-setup','infocus-refresh','infocus-scans','infocus-checkout','infocus-return','infocus-photo','infocus-print','users-load','users-reset','mapping-load','asset-assign','nav']);
+function runSiapAction(key,button){
+ const type=String(key||'').split('|')[0];
+ if(!siapBusyActions.has(type)){act(key);return;}
+ if(siapActionInFlight.has(type)){toast('Sedang diproses. Mohon tunggu.');return;}
+ siapActionInFlight.add(type);
+ if(button){button.classList.add('is-loading');button.dataset.previousText=button.textContent;button.textContent='Memproses...';button.disabled=true;}
+ setSiapBusy(true,type==='infocus-checkout'?'Menyimpan peminjaman...':type==='infocus-return'?'Memproses pengembalian...':'Mohon tunggu...');
+ try{const result=act(key);Promise.resolve(result).finally(()=>{siapActionInFlight.delete(type);setSiapBusy(false);if(button){button.classList.remove('is-loading');button.textContent=button.dataset.previousText||button.textContent;button.disabled=false;}});}
+ catch(error){siapActionInFlight.delete(type);setSiapBusy(false);if(button){button.classList.remove('is-loading');button.textContent=button.dataset.previousText||button.textContent;button.disabled=false;}throw error;}
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-action]');if(!b)return;
+ if(b.disabled||b.classList.contains('is-loading')){e.preventDefault();return;}
+ runSiapAction(b.dataset.action,b);
+});
+
+document.addEventListener('submit',e=>{
+ const form=e.target;if(!(form instanceof HTMLFormElement))return;
+ if(form.dataset.siapSubmitting==='1'){e.preventDefault();toast('Form sedang diproses. Mohon tunggu.');return;}
+ form.dataset.siapSubmitting='1';
+ const submit=form.querySelector('button[type="submit"],button:not([type])');
+ if(submit){submit.disabled=true;submit.dataset.previousText=submit.textContent;submit.textContent='Menyimpan...';}
+ setSiapBusy(true,'Menyimpan data...');
+});
 document.addEventListener('input',e=>{if(e.target.id==='search'||e.target.id==='mappingSearch'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById(e.target.id);if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
 document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
 document.getElementById('toggle').onclick=()=>document.getElementById('sidebar').classList.toggle('open');document.getElementById('modalback').addEventListener('click',e=>{if(e.target.id==='modalback')closeModal()});
@@ -583,6 +631,7 @@ function showLogin(message=''){
 function logout(){try{sessionStorage.removeItem('simspaSession')}catch(e){}showLogin('Anda telah keluar dari SIAP.')}
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();
+ const loginForm=e.currentTarget;if(loginForm.dataset.siapSubmitting==='1')return;loginForm.dataset.siapSubmitting='1';
  const identifier=document.getElementById('loginIdentifier').value.trim();
  const password=document.getElementById('loginPassword').value;
  const btn=document.getElementById('loginSubmit'),err=document.getElementById('loginError');
@@ -610,7 +659,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
    document.getElementById('activeRoleLabel').textContent=(result.user.name||ROLES[role])+' · '+ROLES[role];
    render();
  }catch(error){err.textContent=error.message||'Terjadi kesalahan saat login.';err.style.display='block'}
- finally{btn.disabled=false;btn.textContent='Masuk'}
+ finally{loginForm.dataset.siapSubmitting='0';btn.disabled=false;btn.textContent='Masuk'}
 });
 
 
