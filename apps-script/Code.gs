@@ -445,14 +445,19 @@ function syncRecords_(user,module,records) {
       const preservedInfocus = String(module)==='loans'
         ? values.slice(1).filter(row => String(row[0])==='loans' && (()=>{try{return JSON.parse(row[2]).type==='infocus';}catch(e){return false;}})())
         : [];
+      const preservedScans = String(module)==='loans'
+        ? values.slice(1).filter(row => String(row[0])==='infocus_scans')
+        : [];
       for (let i=values.length-1;i>=1;i--) {
         if (String(values[i][0])===String(module) &&
             !(String(module)==='loans' && (()=>{try{return JSON.parse(values[i][2]).type==='infocus';}catch(e){return false;}})())) sh.deleteRow(i+1);
       }
       const rows = records.map(record => [String(module),String(record.id || Utilities.getUuid()),JSON.stringify(record),now,user.userId]);
       if (rows.length) sh.getRange(sh.getLastRow()+1,1,rows.length,5).setValues(rows);
+      if (preservedInfocus.length) sh.getRange(sh.getLastRow()+1,1,preservedInfocus.length,5).setValues(preservedInfocus.map(row=>row.slice(0,5)));
+      if (preservedScans.length) sh.getRange(sh.getLastRow()+1,1,preservedScans.length,5).setValues(preservedScans.map(row=>row.slice(0,5)));
       log_(user,'Sinkronisasi',name,'',rows.length+' data disinkronkan');
-      return {ok:true,count:rows.length,mode:'replace',preservedInfocus:preservedInfocus.length};
+      return {ok:true,count:rows.length,mode:'replace',preservedInfocus:preservedInfocus.length,preservedScans:preservedScans.length};
     }
     const current = sh.getDataRange().getValues();
     const index = new Map();
