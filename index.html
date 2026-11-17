@@ -182,13 +182,40 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
 /* Global busy guard: stop repeated submissions and show a blocking wait state */
-#siapBusyOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(9,27,45,.42);backdrop-filter:blur(3px);padding:20px}
-#siapBusyOverlay.is-active{display:flex}
-#siapBusyOverlay .busy-card{min-width:230px;max-width:90vw;background:#fff;border:1px solid #dce6ee;border-radius:18px;padding:22px 26px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.2);color:#17324b}
-#siapBusyOverlay .busy-spinner{width:34px;height:34px;border:4px solid #dce9ef;border-top-color:#0d9488;border-radius:50%;margin:0 auto 13px;animation:siapSpin .8s linear infinite}
-#siapBusyOverlay .busy-title{font-weight:800;font-size:15px}
-#siapBusyOverlay .busy-sub{font-size:12px;color:#64778a;margin-top:5px}
+/* SIAP cinematic launcher loading screen */
+#siapBusyOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;overflow:hidden;padding:24px;background:radial-gradient(ellipse at 50% 43%,#15536a 0%,#0b3049 42%,#061827 100%);color:#eaf8ff}
+#siapBusyOverlay.is-active{display:flex;animation:siapOverlayIn .35s ease both}
+#siapBusyOverlay:before,#siapBusyOverlay:after{content:"";position:absolute;inset:-45%;pointer-events:none}
+#siapBusyOverlay:before{background:repeating-linear-gradient(115deg,transparent 0 80px,#69e4d30b 81px 82px,transparent 83px 160px);animation:siapGridDrift 22s linear infinite}
+#siapBusyOverlay:after{inset:0;background:radial-gradient(circle at 50% 50%,transparent 0 28%,#03111a55 80%);box-shadow:inset 0 0 140px #020b14aa}
+#siapBusyOverlay .busy-card{position:relative;z-index:1;width:min(560px,94vw);min-width:0;max-width:94vw;padding:clamp(28px,5vw,54px) 28px 34px;text-align:center;border:1px solid #8deadd3a;border-radius:28px;background:linear-gradient(150deg,#ffffff0c,#ffffff04);box-shadow:0 28px 100px #020d18a6,inset 0 1px #ffffff1e;backdrop-filter:blur(16px);color:#f2fbff;overflow:hidden}
+#siapBusyOverlay .busy-card:before{content:"";position:absolute;top:0;left:-60%;width:45%;height:2px;background:linear-gradient(90deg,transparent,#8bf5e4,transparent);animation:siapSweep 3.2s ease-in-out infinite}
+#siapBusyOverlay .busy-brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:24px;color:#b6d4e2;font:700 10px/1.2 Manrope,sans-serif;letter-spacing:3px;text-transform:uppercase}
+#siapBusyOverlay .busy-mark{width:38px;height:38px;display:grid;place-items:center;border:1px solid #8beadd70;border-radius:12px;background:linear-gradient(145deg,#d7fff5,#64cbbb);color:#08374a;font:900 12px Manrope,sans-serif;box-shadow:0 0 28px #53e7d64d;letter-spacing:-.5px}
+#siapBusyOverlay .busy-emblem{width:176px;height:176px;position:relative;margin:0 auto 21px;display:grid;place-items:center}
+#siapBusyOverlay .busy-ring{position:absolute;inset:0;border:1px solid #83f1df2c;border-radius:50%;animation:siapOrbit 9s linear infinite}
+#siapBusyOverlay .busy-ring:before{content:"";position:absolute;width:9px;height:9px;left:19px;top:31px;border-radius:50%;background:#a6fff0;box-shadow:0 0 16px #5cf5df}
+#siapBusyOverlay .busy-ring.r2{inset:13px;border-style:dashed;border-color:#81e5d54d;animation:siapOrbit 16s linear infinite reverse}
+#siapBusyOverlay .busy-ring.r3{inset:28px;border-color:#b2f5ec24;animation:siapPulse 2.2s ease-in-out infinite}
+#siapBusyOverlay .busy-core{width:90px;height:90px;display:grid;place-items:center;border-radius:26px;background:linear-gradient(145deg,#e6fff9,#5bc7b8);color:#0b3545;font:900 27px Manrope,sans-serif;letter-spacing:-2px;box-shadow:0 0 0 8px #8cf1df10,0 0 55px #4ee2cb65,inset 0 2px #fff;animation:siapFloat 2.7s ease-in-out infinite}
+#siapBusyOverlay .busy-core:after{content:"";position:absolute;width:90px;height:90px;border-radius:26px;border:1px solid #d9fff6;animation:siapCoreGlow 2.7s ease-in-out infinite}
+#siapBusyOverlay .busy-kicker{color:#79e8d6;font:800 9px Manrope,sans-serif;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+#siapBusyOverlay .busy-title{font:800 clamp(19px,3vw,25px)/1.25 Manrope,sans-serif;letter-spacing:-.6px;color:#fff;text-shadow:0 2px 25px #72e8d333}
+#siapBusyOverlay .busy-sub{max-width:390px;margin:10px auto 0;color:#a6c5d5;font:500 12px/1.7 'DM Sans',sans-serif}
+#siapBusyOverlay .busy-progress{height:4px;width:min(300px,75%);margin:27px auto 12px;border-radius:8px;background:#ffffff18;overflow:hidden}
+#siapBusyOverlay .busy-progress span{display:block;width:42%;height:100%;border-radius:8px;background:linear-gradient(90deg,#36bfae,#bdfff2,#36bfae);box-shadow:0 0 18px #56f0dc;animation:siapProgress 1.7s ease-in-out infinite}
+#siapBusyOverlay .busy-foot{font:700 9px Manrope,sans-serif;letter-spacing:2px;color:#6f9daf;text-transform:uppercase}
 @keyframes siapSpin{to{transform:rotate(360deg)}}
+@keyframes siapOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes siapOrbit{to{transform:rotate(360deg)}}
+@keyframes siapPulse{50%{transform:scale(1.08);opacity:.55}}
+@keyframes siapFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.035)}}
+@keyframes siapCoreGlow{50%{transform:scale(1.23);opacity:.2}}
+@keyframes siapProgress{0%{transform:translateX(-120%)}100%{transform:translateX(260%)}}
+@keyframes siapSweep{0%{left:-60%}55%,100%{left:120%}}
+@keyframes siapGridDrift{to{transform:translate3d(80px,40px,0)}}
+@media(max-width:520px){#siapBusyOverlay .busy-card{padding:30px 18px;border-radius:23px}#siapBusyOverlay .busy-emblem{width:150px;height:150px}#siapBusyOverlay .busy-core,#siapBusyOverlay .busy-core:after{width:78px;height:78px;border-radius:22px}}
+@media(prefers-reduced-motion:reduce){#siapBusyOverlay *,#siapBusyOverlay:before,#siapBusyOverlay:after{animation:none!important;transition:none!important}}
 body.siap-busy{overflow:hidden}
 body.siap-busy #appShell{pointer-events:none;user-select:none}
 body.siap-busy #siapBusyOverlay{pointer-events:auto}
@@ -207,7 +234,17 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
 
 </head>
 <body>
-<div id="siapBusyOverlay" aria-live="assertive" aria-busy="true"><div class="busy-card"><div class="busy-spinner"></div><div class="busy-title" id="siapBusyTitle">Sedang memproses...</div><div class="busy-sub">Mohon tunggu, jangan tekan tombol lain.</div></div></div>
+<div id="siapBusyOverlay" aria-live="assertive" aria-busy="true">
+ <div class="busy-card">
+  <div class="busy-brand"><span class="busy-mark">SIAP</span><span>System Initialization</span></div>
+  <div class="busy-emblem" aria-hidden="true"><span class="busy-ring"></span><span class="busy-ring r2"></span><span class="busy-ring r3"></span><div class="busy-core">SIAP</div></div>
+  <div class="busy-kicker">Secure • Integrated • Adaptive</div>
+  <div class="busy-title" id="siapBusyTitle">Menyiapkan sistem SIAP...</div>
+  <div class="busy-sub" id="siapBusySub">Menghubungkan layanan dan menyiapkan ruang kerja Anda</div>
+  <div class="busy-progress"><span></span></div>
+  <div class="busy-foot">ASSET & FACILITY MANAGEMENT</div>
+ </div>
+</div>
 
 <!--
  SIAP LOGIN HOTFIX:
@@ -314,8 +351,17 @@ let siapRequestDepth=0;
 function setSiapBusy(active,label){
  const overlay=document.getElementById('siapBusyOverlay');
  if(!overlay)return;
- if(active){siapRequestDepth++;overlay.classList.add('is-active');document.body.classList.add('siap-busy');const title=document.getElementById('siapBusyTitle');if(title)title.textContent=label||'Sedang memproses...';}
- else{siapRequestDepth=Math.max(0,siapRequestDepth-1);if(siapRequestDepth===0){overlay.classList.remove('is-active');document.body.classList.remove('siap-busy');}}
+ if(active){
+  siapRequestDepth++;
+  overlay.classList.add('is-active');document.body.classList.add('siap-busy');
+  const title=document.getElementById('siapBusyTitle');
+  const sub=document.getElementById('siapBusySub');
+  if(title)title.textContent=label||'Menyiapkan sistem SIAP...';
+  if(sub)sub.textContent=String(label||'').toLowerCase().includes('akun')?'Memverifikasi kredensial dan mengamankan akses Anda':String(label||'').toLowerCase().includes('data')||String(label||'').toLowerCase().includes('sheets')?'Mengambil data terbaru dari pusat penyimpanan SIAP':'Mohon tunggu, SIAP sedang menjalankan proses Anda';
+ }else{
+  siapRequestDepth=Math.max(0,siapRequestDepth-1);
+  if(siapRequestDepth===0){overlay.classList.remove('is-active');document.body.classList.remove('siap-busy');}
+ }
 }
 async function apiCall(payload,token){
  const body=Object.assign({},payload,token?{token}:{});
