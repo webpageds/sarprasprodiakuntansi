@@ -227,6 +227,406 @@ button.is-loading,[data-action].is-loading{opacity:.65!important;cursor:wait!imp
 #loginForm input{padding:12px 13px;border:1px solid #dce5eb;border-radius:10px}
 #loginForm input:focus{border-color:#0d9488;outline:3px solid #7dd3c733}
 #loginSubmit:disabled{opacity:.65;cursor:wait}
+
+
+
+/* --- SIAP visual refinement (safe, presentation-only layer) --- */
+:root{
+ --navy:#13263d;
+ --navy2:#1c3551;
+ --teal:#176b68;
+ --teal-soft:#e8f3f1;
+ --bg:#f5f6f8;
+ --surface:#ffffff;
+ --ink:#172436;
+ --muted:#687789;
+ --line:#e3e8ee;
+ --orange:#bd7a36;
+ --red:#bf4b4b;
+ --green:#287a5a;
+ --shadow:0 8px 22px rgba(20,35,55,.055);
+ --radius:13px;
+ color-scheme:light
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+ background:var(--bg);
+ color:var(--ink);
+ font-family:Inter,"Segoe UI",Arial,sans-serif;
+ font-size:14px;
+ line-height:1.55;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility
+}
+h1,h2,h3,.brand strong,.pagehead h1,.panel h3,.kpi strong{
+ font-family:Manrope,Inter,"Segoe UI",sans-serif;
+ letter-spacing:-.025em
+}
+button,input,select,textarea{font:inherit}
+button{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+ outline:3px solid #8ca99f55;outline-offset:2px
+}
+
+/* Login gateway – retain the existing two-column layout and all login controls */
+#loginScreen{
+ background:
+  radial-gradient(ellipse at 82% 12%,#2e6670 0%,transparent 34%),
+  linear-gradient(135deg,#12243a 0%,#183b50 57%,#174f4a 100%);
+ padding:28px
+}
+.login-shell{
+ width:min(1080px,100%);
+ grid-template-columns:1fr 1.08fr;
+ border:1px solid #dce5eb;
+ border-radius:18px;
+ box-shadow:0 26px 74px rgba(4,18,32,.28)
+}
+.login-intro{
+ background:linear-gradient(155deg,#172e49 0%,#174f50 100%);
+ padding:46px 44px;
+ min-height:580px
+}
+.login-intro:after{font-size:168px;color:#ffffff09}
+.login-mark{
+ border-radius:11px;
+ background:#e7f1ed;
+ color:#195c53;
+ box-shadow:inset 0 0 0 1px #ffffff9a
+}
+.login-intro h1{
+ font-size:clamp(30px,4vw,42px);
+ line-height:1.12;
+ letter-spacing:-1.5px
+}
+.login-intro p{color:#d0dfe4;line-height:1.75}
+.login-point{color:#edf5f3}
+.login-point span{border-radius:8px;background:#ffffff16}
+.login-copy{color:#b2c9cd}
+.login-select{padding:44px 42px;background:#fff}
+.login-select h2{font-size:25px;color:#1d3044}
+.login-select>p{font-size:13px;color:#718093;line-height:1.65}
+.role-grid{gap:11px}
+.role-card{
+ border:1px solid #e2e8ed;
+ border-radius:11px;
+ padding:16px;
+ min-height:122px;
+ color:#24364a;
+ box-shadow:none;
+ background:#fff
+}
+.role-card:hover,.role-card.selected{
+ border-color:#7ba69c;
+ background:#f2f7f5;
+ box-shadow:0 5px 16px rgba(23,78,70,.07);
+ transform:translateY(-1px)
+}
+.role-icon{
+ width:36px;height:36px;border-radius:9px;
+ background:#eaf2ef;color:#1d6659
+}
+.role-card b{font-size:13px}
+.role-card small{color:#788697;font-size:11px}
+.login-action button{
+ border-radius:9px;
+ background:#176b68;
+ box-shadow:0 5px 14px rgba(23,107,104,.15)
+}
+.login-action button:hover{background:#125956}
+.login-action button:disabled{background:#b9c9c8}
+.login-hint{color:#8591a0;font-size:11px}
+#loginForm input{border-radius:9px;border-color:#dce4e9}
+#loginForm input:focus{border-color:#6a9e91;outline:3px solid #78a99a30}
+
+/* Main navigation */
+.sidebar{
+ width:254px;
+ padding:24px 16px;
+ background:linear-gradient(180deg,#14283e 0%,#192f45 100%);
+ color:#eaf1f5;
+ border-right:1px solid #0e2032
+}
+.mainwrap{margin-left:254px}
+.brand{padding:2px 10px 24px;border-bottom-color:#ffffff20}
+.brandmark{
+ width:42px;height:42px;border-radius:11px;
+ background:#e7f1ed;color:#195c53;
+ font-size:18px
+}
+.brand strong{font-size:14px;letter-spacing:0}
+.brand small{color:#b5c7d2;font-size:11px}
+.navlabel{
+ color:#91a9b8;font-size:9px;letter-spacing:1.55px;
+ padding:22px 12px 8px
+}
+.nav{gap:4px}
+.nav button{
+ min-height:40px;
+ border-radius:8px;
+ padding:10px 12px;
+ color:#cad6df;
+ font-size:12px;
+ font-weight:600;
+ background:transparent;
+ box-shadow:none
+}
+.nav button:hover{background:#ffffff12;color:#fff}
+.nav button.active{
+ background:#ffffff19;
+ color:#fff;
+ box-shadow:inset 3px 0 #83b7a8
+}
+.nav .ico{width:21px;font-size:15px}
+.sidefoot{
+ border-top:1px solid #ffffff20;
+ color:#b5c7d2;
+ padding:13px 10px 0;
+ font-size:11px;
+ line-height:1.6
+}
+.sidefoot b{color:#fff;font-size:12px}
+
+/* Header and page hierarchy */
+.topbar{
+ height:70px;
+ padding:0 32px;
+ background:rgba(255,255,255,.97);
+ border-bottom:1px solid var(--line);
+ backdrop-filter:blur(10px);
+ box-shadow:0 2px 8px rgba(18,37,58,.025)
+}
+.crumb{font-size:11px;color:#7b8795}
+.crumb b{font-size:13px;color:#1e3044;font-weight:750}
+.top-actions{gap:10px}
+.rolebox{
+ background:#f1f5f6;border:1px solid #e1e9eb;
+ border-radius:8px;color:#315b5b;
+ padding:7px 10px;font-weight:650
+}
+.avatar{background:#e7f1ed;color:#195c53}
+.content{max-width:1480px;padding:30px 32px 54px}
+.pagehead{margin-bottom:23px}
+.eyebrow{color:#24746d;font-size:9px;letter-spacing:1.55px}
+.pagehead h1{font-size:27px;line-height:1.2;letter-spacing:-.9px;color:#172b40}
+.pagehead p{font-size:13px;color:#718093;line-height:1.6}
+.actions{gap:8px}
+.btn{
+ border:1px solid #dfe6eb;
+ background:#fff;
+ color:#26384b;
+ border-radius:8px;
+ padding:9px 13px;
+ box-shadow:none;
+ font-size:12px;
+ font-weight:650
+}
+.btn:hover{
+ border-color:#a9c2bd;
+ background:#fbfdfc;
+ transform:translateY(-1px);
+ box-shadow:0 4px 12px rgba(23,52,70,.06)
+}
+.btn.primary{background:#176b68;border-color:#176b68;color:#fff}
+.btn.primary:hover{background:#125956;border-color:#125956}
+.btn.dark{background:#1c3551;border-color:#1c3551;color:#fff}
+.btn.danger{color:#b74747;border-color:#efd9d9;background:#fffafa}
+.btn.sm{padding:6px 9px;font-size:11px}
+
+/* Dashboard cards and content surfaces */
+.kpis{gap:13px;margin-bottom:17px}
+.kpi{
+ border:1px solid #e2e8ed;
+ border-radius:12px;
+ padding:17px 18px;
+ box-shadow:0 3px 12px rgba(21,43,65,.025);
+ background:#fff
+}
+.kpi:after{width:64px;height:64px;right:-24px;top:-26px;opacity:.65}
+.kpi-top{font-size:11px;color:#718092}
+.kpi-icon{width:31px;height:31px;border-radius:9px}
+.kpi strong{font-size:26px;letter-spacing:-.7px;color:#1c3045}
+.kpi small{font-size:10px;color:#7d8998}
+.panel{
+ border:1px solid #e2e8ed;
+ border-radius:12px;
+ padding:18px;
+ box-shadow:0 3px 12px rgba(21,43,65,.025);
+ background:#fff
+}
+.panelhead{
+ border-bottom:1px solid #edf0f3;
+ padding-bottom:11px;
+ margin-bottom:15px
+}
+.panel h3{font-size:14px;color:#203348}
+.panelhead small{font-size:11px;color:#7a8795}
+.columns{gap:14px;margin-bottom:15px}
+.stack{gap:14px}
+.chartrow{font-size:11px}
+.track{height:8px;border-radius:5px;background:#edf1f3}
+.fill{background:#287f76;border-radius:5px}
+.shortcut{border-bottom-color:#edf0f3}
+.shortico{border-radius:9px;background:#eaf2ef;color:#1d6659}
+.notice{border:1px solid #dcebe6;background:#f2f8f5;color:#356d5e;border-radius:9px}
+
+/* Tables, forms and modals */
+.toolbar{gap:9px}
+input,select,textarea{
+ border:1px solid #dfe6eb;
+ background:#fff;
+ color:#24364a;
+ border-radius:8px;
+ padding:9px 11px
+}
+input::placeholder,textarea::placeholder{color:#9aa5b0}
+input:focus,select:focus,textarea:focus{border-color:#72a195;outline:3px solid #72a19522}
+.tablewrap{border:1px solid #e1e7ec;border-radius:10px}
+table{font-size:12px}
+th{
+ background:#f5f7f8;color:#778595;
+ font-size:9px;letter-spacing:.65px;
+ padding:12px 13px
+}
+td{border-top:1px solid #edf0f3;padding:10px 13px}
+tbody tr:hover{background:#f8fbfa}
+.badge{border-radius:5px;padding:4px 7px;font-size:9px}
+.badge.good{background:#e9f5ef;color:#287552}
+.badge.warn{background:#fff5e7;color:#9c681f}
+.badge.bad{background:#fff0ef;color:#b04444}
+.badge.info{background:#edf3f7;color:#426b89}
+.modalback{background:rgba(13,29,46,.58);backdrop-filter:blur(2px)}
+.modal{
+ border-radius:14px;
+ border:1px solid #e3e9ee;
+ box-shadow:0 22px 65px rgba(12,30,48,.24)
+}
+.modal h2{font-size:18px;color:#1c3045}
+.modal p{color:#738193}
+.formgrid{gap:13px}
+.field label{color:#627487}
+.toast{border-radius:9px;background:#183149;box-shadow:0 8px 25px rgba(10,27,43,.18)}
+
+/* Export cards and small utility surfaces */
+.export-head{border-top-color:#e8edf1}
+.export-head b{font-size:14px;color:#22364a}
+.export-card{
+ border:1px solid #e2e8ed;border-radius:10px;
+ box-shadow:none;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease
+}
+.export-card:hover{border-color:#a8c2ba;box-shadow:0 5px 15px rgba(22,50,64,.06);transform:translateY(-1px)}
+.export-card b{font-size:11px}
+.export-icon{border-radius:8px}
+
+/* Loading: fade in/out gently, reduce visual motion and avoid sudden full-screen flashes */
+#siapBusyOverlay{
+ background:rgba(12,27,43,.42);
+ backdrop-filter:blur(3px);
+ -webkit-backdrop-filter:blur(3px);
+ opacity:0;
+ transition:opacity .22s ease;
+}
+#siapBusyOverlay.is-active{
+ display:flex;
+ opacity:1;
+ animation:none
+}
+#siapBusyOverlay .busy-card{
+ width:min(440px,92vw);
+ padding:30px 28px 25px;
+ border:1px solid rgba(255,255,255,.2);
+ border-radius:16px;
+ background:linear-gradient(155deg,#18334a,#204b51);
+ box-shadow:0 18px 54px rgba(3,15,27,.25);
+ backdrop-filter:blur(12px);
+ transform:translateY(7px) scale(.99);
+ opacity:.96;
+ transition:transform .22s ease,opacity .22s ease
+}
+#siapBusyOverlay.is-active .busy-card{transform:translateY(0) scale(1);opacity:1}
+#siapBusyOverlay .busy-card:before{
+ content:"";position:absolute;top:0;left:0;width:100%;height:2px;
+ background:linear-gradient(90deg,transparent,#a8d9c8,transparent);
+ animation:none
+}
+#siapBusyOverlay .busy-brand{
+ color:#c2d5dd;font-size:9px;letter-spacing:2px;margin-bottom:16px
+}
+#siapBusyOverlay .busy-mark{
+ background:#e7f1ed;color:#195c53;border:0;border-radius:8px;
+ box-shadow:none;width:34px;height:34px
+}
+#siapBusyOverlay .busy-emblem{width:112px;height:112px;margin-bottom:15px}
+#siapBusyOverlay .busy-ring{border-color:#b9d9d52c;animation-duration:18s}
+#siapBusyOverlay .busy-ring:before{width:6px;height:6px;background:#b8e0ce;box-shadow:0 0 9px #a6d6c5}
+#siapBusyOverlay .busy-ring.r2{border-color:#b9d9d52a;animation-duration:24s}
+#siapBusyOverlay .busy-ring.r3{border-color:#b9d9d51c;animation-duration:5s}
+#siapBusyOverlay .busy-core{
+ width:60px;height:60px;border-radius:13px;
+ background:linear-gradient(145deg,#e9f2ed,#b8d6cb);
+ color:#1a4d4b;font-size:19px;letter-spacing:-1px;
+ box-shadow:0 0 0 5px rgba(185,217,205,.09);
+ animation:none
+}
+#siapBusyOverlay .busy-core:after{display:none}
+#siapBusyOverlay .busy-kicker{color:#b7dece;font-size:8px;letter-spacing:2px;margin-bottom:6px}
+#siapBusyOverlay .busy-title{font-size:19px;text-shadow:none;letter-spacing:-.4px}
+#siapBusyOverlay .busy-sub{font-size:11px;color:#c5d6dc;line-height:1.6;margin-top:7px}
+#siapBusyOverlay .busy-progress{width:190px;height:3px;margin:18px auto 10px;background:#ffffff20}
+#siapBusyOverlay .busy-progress span{
+ background:linear-gradient(90deg,#84b9a5,#d5e9d9,#84b9a5);
+ box-shadow:none;animation-duration:2.8s
+}
+#siapBusyOverlay .busy-foot{font-size:8px;color:#9eb9bd;letter-spacing:1.6px}
+body.siap-busy{overflow:hidden}
+button.is-loading,[data-action].is-loading{filter:none;opacity:.68}
+
+/* Responsive refinements – preserve the app's existing breakpoints and navigation model */
+@media(max-width:1100px){
+ .content{padding:26px 22px}
+}
+@media(max-width:760px){
+ #loginScreen{padding:14px;align-items:flex-start}
+ .login-shell{grid-template-columns:1fr;border-radius:15px;margin:auto}
+ .login-intro{min-height:0;padding:25px 24px 22px}
+ .login-intro h1{font-size:26px;margin:25px 0 9px}
+ .login-intro p{font-size:12px;margin:0}
+ .login-points,.login-copy{display:none}
+ .login-intro:after{font-size:112px;bottom:-15px}
+ .login-select{padding:25px 21px}
+ .login-select h2{font-size:21px}
+ .role-card{min-height:110px;padding:13px}
+ .role-grid{gap:9px}
+ .sidebar{width:280px}
+ .mainwrap{margin-left:0}
+ .topbar{padding:0 16px}
+ .content{padding:22px 15px 90px}
+ .pagehead{align-items:flex-start;flex-direction:column}
+ .pagehead h1{font-size:22px}
+ .top-actions{gap:7px}
+ .rolebox{max-width:142px}
+ .columns,.columns.equal{grid-template-columns:1fr}
+ .kpis{gap:9px}
+ .kpi{padding:13px}
+ .kpi strong{font-size:23px}
+ .kpi-top{font-size:10px}
+ .kpi-icon{width:27px;height:27px}
+ .panel{padding:14px}
+ .formgrid{grid-template-columns:1fr}
+ .field.full{grid-column:auto}
+ .mobile-nav{background:#fff;border-top-color:var(--line)}
+ .mobile-nav button.active{background:var(--teal-soft);color:var(--teal)}
+ .sidefoot{margin-top:20px}
+}
+@media(max-width:390px){
+ .kpis{grid-template-columns:1fr 1fr}
+ .kpi strong{font-size:21px}
+ .rolebox{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
 </style><script>
 /* Isi URL /exec setelah deployment Apps Script. */
 window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTPmu_opMqkqHuqXcvlKncWvIh_ACdln6SriRBbrJe9YlTjoQiWVGpi/exec';
