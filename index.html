@@ -143,6 +143,54 @@ tbody tr:hover{background:#f8faff}
 #siapBusyOverlay .busy-progress span{background:#6688ff;box-shadow:none}
 #siapBusyOverlay .busy-foot{color:#7e8da2;letter-spacing:1.5px}
 
+/* Layout repair: restore proper sidebar, header and content grid */
+#appShell{display:block!important;position:relative!important;min-height:100vh!important;width:100%!important}
+#appShell>.sidebar{position:fixed!important;inset:0 auto 0 0!important;width:250px!important;height:100vh!important;min-height:100vh!important;display:flex!important;flex-direction:column!important;z-index:30!important;overflow-y:auto!important}
+#appShell>.mainwrap{display:flex!important;flex-direction:column!important;margin-left:250px!important;width:calc(100% - 250px)!important;min-width:0!important;min-height:100vh!important}
+#appShell .mainwrap>.topbar{position:sticky!important;top:0!important;z-index:20!important;width:100%!important;min-height:68px!important;height:68px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;flex:0 0 68px!important}
+#appShell .mainwrap>main.content{display:block!important;position:relative!important;width:100%!important;max-width:1480px!important;min-height:calc(100vh - 68px)!important;margin:0 auto!important;padding:30px 34px 54px!important;flex:1 0 auto!important}
+#appShell .sidebar .nav{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important}
+#appShell .sidebar .nav button{display:flex!important;width:100%!important;min-height:40px!important;align-items:center!important;justify-content:flex-start!important;border:1px solid transparent!important;border-radius:8px!important;padding:10px 11px!important;background:transparent!important;color:#aeb9c8!important;box-shadow:none!important;text-align:left!important;white-space:normal!important}
+#appShell .sidebar .nav button.active{background:#202d3d!important;color:#fff!important;border-left:2px solid #6488ff!important}
+#appShell .sidebar .brand{display:flex!important;align-items:center!important;gap:11px!important}
+#appShell .sidebar .brandmark{display:grid!important;place-items:center!important;flex:0 0 39px!important;width:39px!important;height:39px!important}
+#appShell .sidebar .brand strong,#appShell .sidebar .brand small{display:block!important}
+#appShell .sidefoot{display:block!important;margin-top:auto!important;line-height:1.6!important}
+#appShell .sidefoot b{display:block!important;margin-bottom:3px!important}
+#appShell .topbar .mobile-toggle{display:none!important}
+#appShell .topbar .top-actions{display:flex!important;align-items:center!important;gap:10px!important}
+#appShell .topbar .btn{display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#appShell .content .pagehead{display:flex!important;align-items:flex-end!important;justify-content:space-between!important}
+#appShell .content .kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#appShell .content .columns{display:grid!important}
+#appShell .content .panel{display:block!important;min-width:0!important}
+#appShell .content .toolbar{display:flex!important;align-items:center!important}
+#appShell .content .tablewrap{display:block!important;overflow:auto!important}
+#appShell .content .tablewrap table{display:table!important;width:100%!important;border-collapse:collapse!important}
+#appShell .content .tablewrap thead{display:table-header-group!important}
+#appShell .content .tablewrap tbody{display:table-row-group!important}
+#appShell .content .tablewrap tr{display:table-row!important}
+#appShell .content .tablewrap th,#appShell .content .tablewrap td{display:table-cell!important}
+#appShell .mobile-nav{display:none!important}
+@media(max-width:1100px){
+ #appShell .content .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #appShell .content .columns{grid-template-columns:minmax(0,1fr)!important}
+}
+@media(max-width:760px){
+ #appShell>.sidebar{width:280px!important;transform:translateX(-100%)!important}
+ #appShell>.sidebar.open{transform:translateX(0)!important}
+ #appShell>.mainwrap{margin-left:0!important;width:100%!important}
+ #appShell .mainwrap>.topbar{height:auto!important;min-height:64px!important;flex-basis:auto!important;padding:10px 14px!important}
+ #appShell .topbar .mobile-toggle{display:block!important}
+ #appShell .mainwrap>main.content{min-height:calc(100vh - 64px)!important;padding:20px 13px 92px!important}
+ #appShell .content .pagehead{align-items:flex-start!important;flex-direction:column!important}
+ #appShell .content .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #appShell .mobile-nav{display:block!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:35!important;background:#fbfcfd!important;border-top:1px solid #e1e6ed!important}
+ #appShell .mobile-nav .nav{display:flex!important;flex-direction:row!important;justify-content:space-around!important}
+ #appShell .mobile-nav button{display:grid!important;width:auto!important;min-width:58px!important;flex:1 0 58px!important;justify-items:center!important;text-align:center!important;color:#687486!important;background:transparent!important;border:0!important}
+ #appShell .mobile-nav button.active{background:#edf2ff!important;color:#315fe0!important}
+}
+ 
 /* Repair login/loading regression after deployment */
 #siapBusyOverlay{display:none!important}
 #siapBusyOverlay.is-active{display:flex!important}
