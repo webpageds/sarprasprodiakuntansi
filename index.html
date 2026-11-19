@@ -657,11 +657,11 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
   <section class="login-intro">
    <div>
     <div class="login-brand"><div class="login-mark">SIAP</div><div><b style="font:800 14px Manrope;display:block">SIAP</b><small style="color:#b8d3dc">PROGRAM STUDI AKUNTANSI</small></div></div>
-    <h1>Kelola Sarana<br>& Prasarana<br>Lebih Terarah.</h1>
+    <h1>Sistem Informasi<br>Aset dan Prasarana</h1>
     <p>Sistem Informasi Aset & Prasarana Program Studi Akuntansi untuk mendukung pengelolaan aset, fasilitas, dan layanan prodi.</p>
     <div class="login-points"><div class="login-point"><span>▣</span>Inventaris aset dan pemeliharaan terstruktur</div><div class="login-point"><span>⇄</span>Layanan peminjaman dan persetujuan</div><div class="login-point"><span>▧</span>Pelaporan dan pemantauan terintegrasi</div></div>
    </div>
-   <div class="login-copy">© 2026 SIAP Prodi Akuntansi · Sistem Informasi Sarana & Prasarana</div>
+   <div class="login-copy">© 2026 SIAP Prodi Akuntansi · Sistem Informasi Aset dan Prasarana</div>
   </section>
   <section class="login-select">
    <div id="roleChooser">
@@ -833,7 +833,7 @@ function action(label,key,kind=''){return `<button class="btn sm ${kind}" data-a
 function assetCell(a){return a?`<span class="celltitle">${esc(a.nama)}</span><span class="sub">${esc(a.kat||'Tanpa kategori')} · ${esc(a.kode||'Tanpa kode')}${Number(a.jumlah)>1?' · '+Number(a.jumlah)+' '+esc(a.satuan||'unit'):''}</span>`:'—'}
 function visibleLoans(){return role==='dosen'&&currentUser?S.loans.filter(l=>String(l.borrowerUserId||l.createdByUserId||l.borrowerId||'')===String(currentUser.id)):S.loans}
 function conditionRoom(r){let entries=S.clean.filter(c=>c.room===r.id);return entries.some(c=>c.tipe==='keluhan'&&!c.selesai)?'Ada keluhan':entries.some(c=>c.tipe==='cek'&&c.tgl===today())?'Sudah dibersihkan':'Belum dibersihkan'}
-function pageHead(title,desc,buttons=''){return `<div class="pagehead"><div><div class="eyebrow">Sistem Informasi Sarana & Prasarana</div><h1>${title}</h1><p>${desc}</p></div><div class="actions">${buttons}</div></div>`}
+function pageHead(title,desc,buttons=''){return `<div class="pagehead"><div><div class="eyebrow">Sistem Informasi Aset dan Prasarana</div><h1>${title}</h1><p>${desc}</p></div><div class="actions">${buttons}</div></div>`}
 function kpi(label,value,icon,tint='#e6f6f3',tone='#0d9488',foot='Data tercatat dalam sistem'){return `<div class="kpi" style="--tint:${tint};--tone:${tone}"><div class="kpi-top"><span>${label}</span><span class="kpi-icon">${icon}</span></div><strong>${value}</strong><small>${foot}</small></div>`}
 const reports={
 'Inventaris':[['Kode','Nama','Lokasi','Kondisi','Status'],()=>S.assets.map(a=>[a.kode,a.nama,roomName(a.ruang),a.kondisi,a.status])],
