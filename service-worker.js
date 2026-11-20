@@ -1,5 +1,5 @@
 /* SIAP PWA cache policy: force fresh HTML/JS on launch; cache only stable shell assets. */
-const CACHE_NAME = 'siap-shell-v4-cinematic-3';
+const CACHE_NAME = 'siap-shell-v5-install';
 const APP_SHELL = [
   './',
   './index.html',
