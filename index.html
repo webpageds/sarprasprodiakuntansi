@@ -1176,8 +1176,7 @@ if(siapInstallButton){
   /* iOS Safari and unsupported browsers do not provide a programmatic install prompt. */
   var ua=navigator.userAgent||'';
   var isIOS=/iphone|ipad|ipod/i.test(ua);
-  var isSafari=/safari/i.test(ua)&&!/chrome|chromium|crios|edg\\//i.test(ua);
-  if(isIOS && isSafari && siapInstallHelp){
+  if(isIOS && siapInstallHelp){
    siapInstallHelp.textContent='Di iPhone/iPad: ketuk Bagikan di Safari, lalu pilih Tambahkan ke Layar Utama.';
    siapInstallHelp.style.display='block';
   }else if(siapInstallHelp){
