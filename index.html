@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#102b46">\n<meta name="app-build" content="siap-20261117-cinematic-3">
+<meta name="theme-color" content="#102b46">\n<meta name="app-build" content="siap-20261125-session-install-infocus-1">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./assets/app-icon.svg"><meta name="description" content="Sistem Informasi Aset & Prasarana Program Studi Akuntansi">
 <title>SIAP | Aset & Prasarana Akuntansi</title>
@@ -646,12 +646,6 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
  </div>
 </div>
 
-<!--
- SIAP LOGIN HOTFIX:
- The page always starts at the credential form. No role picker or stored session is restored.
- Backend authentication is not yet wired to data CRUD; configure SIMSPA_API_URL only after Apps Script endpoint is deployed.
--->
-
 <div id="loginScreen">
  <div class="login-shell">
   <section class="login-intro">
@@ -700,7 +694,7 @@ window.SIMSPA_API_URL = 'https://script.google.com/macros/s/AKfycbyWqqIUBURLGpTP
 </div>
 <div class="app" id="appShell" hidden>
 <aside class="sidebar" id="sidebar"><div class="brand"><div class="brandmark">SIAP</div><div><strong>SIAP</strong><small>Akuntansi · Sarana & Prasarana</small></div></div><div class="navlabel">MENU UTAMA</div><div class="nav" id="sideNav"></div><div class="sidefoot"><b>Program Studi Akuntansi</b>Sistem informasi pengelolaan sarpras<br><span id="storageState">Penyimpanan perangkat aktif</span></div></aside>
-<div class="mainwrap"><header class="topbar"><div style="display:flex;align-items:center;gap:13px"><button class="mobile-toggle" id="toggle">☰</button><div class="crumb">Sistem Informasi / <b id="crumb">Ringkasan Dashboard</b></div></div><div class="top-actions"><span class="rolebox" id="activeRoleLabel">Admin Prodi</span><button class="btn sm" data-action="logout">Keluar ↗</button><div class="avatar" id="avatar">A</div></div></header><main class="content" id="content"></main></div>
+<div class="mainwrap"><header class="topbar"><div style="display:flex;align-items:center;gap:13px"><button class="mobile-toggle" id="toggle">☰</button><div class="crumb">Sistem Informasi / <b id="crumb">Ringkasan Dashboard</b></div></div><div class="top-actions"><span class="rolebox" id="activeRoleLabel">Admin Prodi</span><button class="btn sm" id="siapLogoutButton" type="button" data-action="logout">Keluar ↗</button><div class="avatar" id="avatar">A</div></div></header><main class="content" id="content"></main></div>
 <div class="mobile-nav"><div class="nav" id="mobileNav"></div></div>
 </div><div class="modalback" id="modalback" hidden><section class="modal" id="modal"></section></div><script>
 'use strict';
@@ -899,7 +893,7 @@ dash(){
  const cards=units.map(x=>'<article class="panel" style="display:flex;gap:13px;align-items:center;flex-wrap:wrap"><div data-infocus-qr="'+esc(x.qr)+'" data-name="Infocus '+esc(x.code)+'" data-code="'+esc(x.code)+'" style="width:116px;min-height:116px;flex:0 0 116px"></div><div style="flex:1;min-width:150px"><b style="font:800 15px Manrope">'+esc(x.code)+'</b><div style="margin:6px 0">'+statusBadge(x.loan?'Dipinjam':'Tersedia')+'</div><small class="muted">'+(x.loan?'Peminjam: '+esc(x.loan.peminjam)+' · '+fmt(x.loan.borrowedAt):'Siap dipinjam')+'</small></div></article>').join('');
  return pageHead('Peminjaman Infocus','12 QR unik untuk setiap unit, scan peminjaman/pengembalian dan catatan lokasi.',admin?'<button class="btn primary" data-action="infocus-refresh">Muat QR & Peta</button><button class="btn" data-action="infocus-print">Cetak 12 QR</button>':'')+
  '<section class="panel"><div class="panelhead"><h3>Ketersediaan per unit</h3><small>12 unit terdaftar</small></div><div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">'+kpi('Total unit','12','▣')+kpi('Sedang dipinjam',12-available,'⇄')+kpi('Tersedia',available,'✓')+'</div></section>'+
- (role==='dosen'?'<section class="panel" style="margin-top:16px"><h3>Scan untuk meminjam</h3><div class="formgrid" style="margin-top:12px"><div class="field"><label>QR unit Infocus</label><input id="infocusQr" placeholder="Scan QR pada unit"></div><div class="field"><label>Kelas / ruang penggunaan</label><input id="infocusRoom" placeholder="Contoh: Ruang 203"></div></div><div class="actions"><button class="btn" data-action="infocus-scan|infocusQr">Buka kamera scan</button><button class="btn primary" data-action="infocus-checkout">Pinjam unit ini</button></div><small class="muted">GPS diminta saat meminjam. Lokasi direkam setelah izin diberikan.</small></section>':'')+
+ (role==='dosen'?'<section class="panel" style="margin-top:16px"><h3>Pilih unit Infocus untuk dipinjam</h3><p class="muted" style="margin:5px 0 12px">Pilih salah satu unit yang tersedia. Scan QR tetap dapat digunakan sebagai cara alternatif.</p><div class="formgrid" style="margin-top:12px"><div class="field"><label for="infocusUnitSelect">Pilih unit Infocus</label><select id="infocusUnitSelect" required><option value="">Pilih unit yang tersedia...</option>'+units.map(x=>'<option value="'+esc(x.code)+'" '+(x.loan?'disabled':'')+'>'+esc(x.code)+' · '+(x.loan?'Sedang dipinjam':'Tersedia')+'</option>').join('')+'</select></div><div class="field"><label for="infocusRoom">Kelas / ruang penggunaan</label><input id="infocusRoom" placeholder="Contoh: Ruang 203" required></div><div class="field full"><label for="infocusQr">QR unit (otomatis dari pilihan atau hasil scan)</label><input id="infocusQr" placeholder="Pilih unit di atas atau scan QR"></div></div><div class="actions"><button class="btn" data-action="infocus-scan|infocusQr">Scan QR sebagai alternatif</button><button class="btn primary" data-action="infocus-checkout">Ajukan peminjaman unit</button></div><small class="muted">Peminjaman tanpa scan: cukup pilih unit, isi ruang penggunaan, lalu klik Ajukan. GPS hanya direkam setelah izin diberikan.</small></section>':'')+
  (role==='dosen'&&active.length?'<section class="panel" style="margin-top:16px"><h3>Pengembalian unit</h3>'+active.map(x=>'<div class="notice" style="margin-top:10px"><b>'+esc(x.unitCode)+' · '+esc(x.unitName||'Infocus')+'</b> · Batas '+fmt(x.dueAt)+'<div class="field"><label>Foto kondisi wajib</label><input type="file" accept="image/*" capture="environment" id="infocusPhoto_'+esc(x.id)+'"></div><div class="field"><label>Scan QR unit yang sama</label><input id="infocusReturnQr_'+esc(x.id)+'" placeholder="Scan QR fisik unit"></div><div class="actions"><button class="btn" data-action="infocus-scan|infocusReturnQr_'+esc(x.id)+'">Scan QR</button><button class="btn primary" data-action="infocus-return|'+esc(x.id)+'">Konfirmasi pengembalian</button></div></div>').join('')+'</section>':'')+
  (admin?'<section class="panel" style="margin-top:16px"><div class="panelhead"><h3>12 QR unit Infocus</h3><small>Setiap kode unik</small></div><div class="columns equal">'+cards+'</div></section><section class="panel" style="margin-top:16px"><div class="panelhead"><h3>Peta & riwayat scan</h3><button class="btn sm" data-action="infocus-scans">Perbarui riwayat</button></div><div id="infocusMap" style="height:330px;border-radius:12px;background:#eef3f7;display:grid;place-items:center;color:#60758a">Muat riwayat scan untuk melihat lokasi GPS</div><div id="infocusScanHistory" style="margin-top:14px"></div></section>':'')+
  '<section class="panel" style="margin-top:16px"><div class="panelhead"><h3>'+(role==='dosen'?'Peminjaman saya':'Seluruh transaksi Infocus')+'</h3><small>'+records.length+' transaksi · '+active.length+' aktif</small></div>'+table(['Kode unit','Nama unit','Peminjam','Kelas','Waktu pinjam','Batas kembali','Status','Foto','Peta'],rows)+'</section>';
@@ -924,7 +918,7 @@ case'users-reset':{const u=usersCache.find(x=>x.userId===p);if(!u)return toast('
 case'infocus-setup':return (async()=>{try{const token=JSON.parse(localStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusSetup'},token);window.infocusPoolStatus=r.pool||{};render();await renderInfocusQrCards();await loadInfocusScanHistory();toast('12 QR unit siap.')}catch(e){toast(e.message)}})();
 case'infocus-refresh':return (async()=>{try{await loadInfocusPool();render();await renderInfocusQrCards();await loadInfocusScanHistory();toast('Data unit diperbarui.')}catch(e){toast(e.message)}})();
 case'infocus-scans':return (async()=>{try{await loadInfocusScanHistory();toast('Riwayat scan diperbarui.')}catch(e){toast(e.message)}})();
-case'infocus-checkout':return (async()=>{try{const token=JSON.parse(localStorage.getItem('simspaSession')||'{}').token,room=document.getElementById('infocusRoom').value.trim(),qr=document.getElementById('infocusQr').value.trim(),unitCode=parseInfocusQr(qr);if(!room||!unitCode)throw new Error('Isi kelas dan scan QR fisik unit INF-001 sampai INF-012.');const location=await getDeviceLocation(),result=await apiCall({action:'infocusCheckout',unitCode,qrValue:qr,usageLocation:room,location},token);window.infocusPoolStatus=result.pool||{};const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil meminjam '+unitCode+'. Batas kembali 24 jam.')}catch(e){toast(e.message)}})();
+case'infocus-checkout':return (async()=>{try{const token=JSON.parse(localStorage.getItem('simspaSession')||'{}').token,room=document.getElementById('infocusRoom').value.trim(),select=document.getElementById('infocusUnitSelect'),qrField=document.getElementById('infocusQr'),selectedCode=select?select.value:'',qr=(qrField&&qrField.value.trim())||(selectedCode?'SIMSPA-INFOCUS:'+selectedCode:''),unitCode=parseInfocusQr(qr);if(!room||!unitCode)throw new Error('Pilih unit Infocus atau scan QR, lalu isi kelas/ruang penggunaan.');if(selectedCode&&selectedCode!==unitCode)throw new Error('Unit pilihan tidak cocok dengan QR. Pilih ulang unit atau scan QR yang sesuai.');const location=await getDeviceLocation(),result=await apiCall({action:'infocusCheckout',unitCode,qrValue:qr,usageLocation:room,location},token);window.infocusPoolStatus=result.pool||{};const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil meminjam '+unitCode+'. Batas kembali 24 jam.')}catch(e){toast(e.message)}})();
 case'infocus-return':return (async()=>{try{const token=JSON.parse(localStorage.getItem('simspaSession')||'{}').token,file=document.getElementById('infocusPhoto_'+p).files[0],qr=document.getElementById('infocusReturnQr_'+p).value.trim(),unitCode=parseInfocusQr(qr);if(!file||!unitCode)throw new Error('Foto dan QR unit yang sama wajib.');const data=await compressInfocusPhoto(file,950000),location=await getDeviceLocation();await apiCall({action:'infocusReturn',loanId:p,unitCode,qrValue:qr,photoData:data,location},token);const r=await apiCall({action:'listMany',modules:['loans']},token);S.loans=r.records.loans||[];render();toast('Berhasil dikembalikan, foto dan lokasi tersimpan.')}catch(e){toast(e.message)}})();
 case'infocus-photo':return (async()=>{try{const token=JSON.parse(localStorage.getItem('simspaSession')||'{}').token,r=await apiCall({action:'infocusPhoto',loanId:p},token);openInfo('<h2>Foto kondisi</h2><img src="'+r.dataUrl+'" alt="Foto Infocus" style="max-width:100%;max-height:65vh">')}catch(e){toast(e.message)}})();
 case'infocus-scan':return startInfocusScanner(p);
@@ -1045,7 +1039,7 @@ document.addEventListener('submit',e=>{
  setSiapBusy(true,'Menyimpan data...');
 });
 document.addEventListener('input',e=>{if(e.target.id==='search'||e.target.id==='mappingSearch'){let pos=e.target.selectionStart;query=e.target.value;let x=e.target;let y=x.scrollTop;document.getElementById('content').innerHTML=V[view]();let n=document.getElementById(e.target.id);if(n){n.focus();n.setSelectionRange(pos,pos);n.scrollTop=y}}});
-document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render()}});
+document.addEventListener('change',e=>{if(e.target.id==='report'){report=e.target.value;query='';render();return;}if(e.target.id==='infocusUnitSelect'){const field=document.getElementById('infocusQr');if(field)field.value=e.target.value?'SIMSPA-INFOCUS:'+e.target.value:'';}});
 document.getElementById('toggle').onclick=()=>document.getElementById('sidebar').classList.toggle('open');document.getElementById('modalback').addEventListener('click',e=>{if(e.target.id==='modalback')closeModal()});
 let selectedLoginRole = '';
 function openCredentialPanel(roleName){
@@ -1101,7 +1095,7 @@ async function restoreSiapSession(){
   render();
  }catch(error){clearSiapSession();showLogin('Sesi tidak dapat dipulihkan. Silakan login kembali. '+(error.message||''))}
 }
-async function logout(){const saved=readSiapSession();try{if(saved&&saved.token)await apiCall({action:'logout'},saved.token);}catch(error){console.warn('SIAP logout backend:',error);}clearSiapSession();showLogin('Anda telah keluar dari SIAP.')}
+async function logout(){const saved=readSiapSession();clearSiapSession();showLogin('Anda telah keluar dari SIAP.');try{if(saved&&saved.token)await apiCall({action:'logout'},saved.token);}catch(error){console.warn('SIAP logout backend:',error);}}
 document.getElementById('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();
  const loginForm=e.currentTarget;if(loginForm.dataset.siapSubmitting==='1')return;loginForm.dataset.siapSubmitting='1';
@@ -1150,6 +1144,8 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
 window.addEventListener('beforeinstallprompt',function(event){
  event.preventDefault();
  siapDeferredInstallPrompt=event;
+ if(siapInstallButton){siapInstallButton.disabled=false;siapInstallButton.textContent='Install SIAP';}
+ if(siapInstallHelp){siapInstallHelp.textContent='SIAP siap dipasang. Tekan tombol Install SIAP.';siapInstallHelp.style.display='block';}
 });
 window.addEventListener('appinstalled',function(){
  siapAlreadyInstalled=true;
@@ -1176,11 +1172,13 @@ if(siapInstallButton){
   /* iOS Safari and unsupported browsers do not provide a programmatic install prompt. */
   var ua=navigator.userAgent||'';
   var isIOS=/iphone|ipad|ipod/i.test(ua);
-  if(isIOS && siapInstallHelp){
-   siapInstallHelp.textContent='Di iPhone/iPad: ketuk Bagikan di Safari, lalu pilih Tambahkan ke Layar Utama.';
-   siapInstallHelp.style.display='block';
-  }else if(siapInstallHelp){
-   siapInstallHelp.textContent='Instalasi belum tersedia di browser ini. Buka SIAP melalui Chrome atau Edge terbaru.';
+  var isMacSafari=/macintosh/i.test(ua)&&/safari/i.test(ua)&&!/chrome|chromium|edg/i.test(ua);
+  var isEdge=/edg/i.test(ua);
+  var browserName=isIOS?'Safari':isMacSafari?'Safari':isEdge?'Microsoft Edge':'Google Chrome';
+  if(siapInstallHelp){
+   siapInstallHelp.textContent=isIOS||isMacSafari
+    ? 'Untuk memasang SIAP: buka menu Bagikan di Safari, lalu pilih Tambahkan ke Dock/Layar Utama (tergantung perangkat).'
+    : 'Buka menu browser '+browserName+' (⋮ atau …), lalu pilih Install SIAP / Instal aplikasi. Pada komputer, ikon install biasanya muncul di sisi kanan address bar. Pastikan situs dibuka melalui HTTPS dan bukan mode Incognito.';
    siapInstallHelp.style.display='block';
   }
  });
